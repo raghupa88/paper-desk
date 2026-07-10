@@ -1,0 +1,34 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: paper-desk
+  datasource:
+    # H2 in Oracle compatibility mode for dev. For real Oracle, override via
+    # SPRING_DATASOURCE_URL / USERNAME / PASSWORD, e.g.
+    #   jdbc:oracle:thin:@//localhost:1521/FREEPDB1
+    url: jdbc:h2:mem:paperdesk;MODE=Oracle;DATABASE_TO_LOWER=FALSE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    # Flyway owns the schema; Hibernate's validator flags NUMBER(19) vs BIGINT
+    # false-positives under H2's Oracle mode, so validation stays off.
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+paperdesk:
+  jwt:
+    secret: "dev-only-secret-change-me-0123456789-0123456789-0123456789"
+    ttl-hours: 72
+  sim:
+    tick-millis: 1000          # real-time engine tick
+    grid-step-sim-seconds: 300 # one GBM step per 5 sim minutes
+    default-acceleration: 300  # 1 real second = 5 sim minutes -> 1 sim day ~ 4.8 real minutes
+    spread-bps: 10             # simulated bid/ask half-spread around mid, in basis points
+    starting-balance: 100000
+    auto-tick: true            # false in tests: sim time only moves via explicit step actions
