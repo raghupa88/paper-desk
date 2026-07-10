@@ -1,0 +1,3 @@
+paperdesk:
+  sim:
+    auto-tick: false  # tests drive sim time explicitly via stepOneDay
