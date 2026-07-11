@@ -4,6 +4,7 @@ import { ModelIds } from '../core/events';
 import { ClockModel } from '../models/ClockModel';
 import { SessionModel } from '../models/SessionModel';
 import { TradingModel } from '../models/TradingModel';
+import { ProgressModel } from '../models/ProgressModel';
 import { useModelState, fmtSimTime, fmtMoney, fmtPct, pnlCls } from './common';
 
 export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
@@ -11,8 +12,12 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
   const session = useModelState<SessionModel, SessionModel['state']>(ModelIds.session, m => m.state);
   const clock = useModelState<ClockModel, ClockModel['state']>(ModelIds.clock, m => m.state).clock;
   const portfolio = useModelState<TradingModel, TradingModel['state']>(ModelIds.trading, m => m.state).portfolio;
+  const progress = useModelState<ProgressModel, ProgressModel['state']>(ModelIds.progress, m => m.state).progress;
 
   const acct = session.activeAccount;
+  const xpPct = progress && progress.nextLevelXp != null
+    ? Math.min(100, ((progress.xp - progress.levelFloorXp) / (progress.nextLevelXp - progress.levelFloorXp)) * 100)
+    : 100;
 
   return (
     <header className="flex items-center gap-4 px-4 py-2 bg-desk-panel border-b border-desk-border">
@@ -57,6 +62,15 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
       </div>
 
       <div className="ml-auto flex items-center gap-4 num text-sm">
+        {progress && (
+          <div className="flex items-center gap-2" title={`${progress.levelName} — ${Math.round(progress.xp)} XP`}>
+            <span className="w-6 h-6 rounded-full bg-desk-bg border border-desk-accent text-desk-accent
+                             flex items-center justify-center text-xs font-bold">{progress.level}</span>
+            <div className="w-20 h-1.5 bg-desk-bg rounded-full overflow-hidden border border-desk-border">
+              <div className="h-full bg-desk-accent" style={{ width: `${xpPct}%` }} />
+            </div>
+          </div>
+        )}
         {portfolio && (
           <>
             <span>Equity <strong>{fmtMoney(portfolio.equity, 0)}</strong></span>

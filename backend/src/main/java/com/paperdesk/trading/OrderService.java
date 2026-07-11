@@ -6,6 +6,7 @@ import com.paperdesk.domain.Fill;
 import com.paperdesk.domain.Instrument;
 import com.paperdesk.domain.Position;
 import com.paperdesk.domain.TradeOrder;
+import com.paperdesk.gamification.GamificationService;
 import com.paperdesk.repo.AccountRepo;
 import com.paperdesk.repo.FillRepo;
 import com.paperdesk.repo.OrderRepo;
@@ -37,10 +38,11 @@ public class OrderService {
     private final MarketDataService market;
     private final SimEngine engine;
     private final SimpMessagingTemplate ws;
+    private final GamificationService gamification;
 
     public OrderService(OrderRepo orderRepo, FillRepo fillRepo, AccountRepo accountRepo,
                         PositionRepo positionRepo, MarketDataService market, SimEngine engine,
-                        SimpMessagingTemplate ws) {
+                        SimpMessagingTemplate ws, GamificationService gamification) {
         this.orderRepo = orderRepo;
         this.fillRepo = fillRepo;
         this.accountRepo = accountRepo;
@@ -48,6 +50,7 @@ public class OrderService {
         this.market = market;
         this.engine = engine;
         this.ws = ws;
+        this.gamification = gamification;
     }
 
     @Transactional
@@ -152,6 +155,7 @@ public class OrderService {
             return;
         }
         applyFill(order, account, instr, price);
+        gamification.onFill(account, instr, order, engine.runtime(instr.sessionId).simDate());
         Fill fill = new Fill();
         fill.orderId = order.id;
         fill.price = price;

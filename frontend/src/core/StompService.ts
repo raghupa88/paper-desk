@@ -13,6 +13,8 @@ export class StompService {
   private subs: StompSubscription[] = [];
   private sessionId: number | null = null;
   private accountId: number | null = null;
+  /** optional side-channel for services that need to react to account events */
+  accountEventHook: ((ev: { type: string; detail?: unknown; code?: string }) => void) | null = null;
 
   constructor(private router: Router) {}
 
@@ -50,8 +52,11 @@ export class StompService {
         this.router.broadcastEvent(EventConst.pricesTick, JSON.parse(msg.body))));
     }
     if (this.accountId != null) {
-      this.subs.push(this.client.subscribe(`/topic/account/${this.accountId}`, msg =>
-        this.router.broadcastEvent(EventConst.accountEventReceived, JSON.parse(msg.body))));
+      this.subs.push(this.client.subscribe(`/topic/account/${this.accountId}`, msg => {
+        const ev = JSON.parse(msg.body);
+        this.router.broadcastEvent(EventConst.accountEventReceived, ev);
+        this.accountEventHook?.(ev);
+      }));
     }
   }
 

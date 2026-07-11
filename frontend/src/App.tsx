@@ -16,10 +16,12 @@ import { FxTraderView } from './views/FxTraderView';
 import { PortfolioView } from './views/PortfolioView';
 import { BlotterView } from './views/BlotterView';
 import { ClassroomView } from './views/ClassroomView';
+import { ProgressView } from './views/ProgressView';
+import { ToastHost } from './views/ToastHost';
 import { EspDevToolsPanel } from './devtools';
 
 export type DeskTab = 'dashboard' | 'market' | 'options' | 'fx-sales' | 'fx-trader'
-  | 'portfolio' | 'blotter' | 'classroom';
+  | 'portfolio' | 'blotter' | 'progress' | 'classroom';
 
 const TABS: Array<{ id: DeskTab; label: string }> = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -29,6 +31,7 @@ const TABS: Array<{ id: DeskTab; label: string }> = [
   { id: 'fx-trader', label: 'FX Trader' },
   { id: 'portfolio', label: 'Portfolio' },
   { id: 'blotter', label: 'Blotter' },
+  { id: 'progress', label: 'Progress' },
   { id: 'classroom', label: 'Classroom' },
 ];
 
@@ -71,8 +74,10 @@ function Shell() {
         {tab === 'fx-trader' && <FxTraderView />}
         {tab === 'portfolio' && <PortfolioView />}
         {tab === 'blotter' && <BlotterView />}
+        {tab === 'progress' && <ProgressView />}
         {tab === 'classroom' && <ClassroomView />}
       </main>
+      <ToastHost />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import com.paperdesk.domain.EquitySnapshot;
 import com.paperdesk.domain.Instrument;
 import com.paperdesk.domain.Position;
 import com.paperdesk.domain.Settlement;
+import com.paperdesk.gamification.GamificationService;
 import com.paperdesk.repo.AccountRepo;
 import com.paperdesk.repo.EquitySnapshotRepo;
 import com.paperdesk.repo.InstrumentRepo;
@@ -46,11 +47,13 @@ public class LifecycleService {
     private final PortfolioService portfolio;
     private final InstrumentFactory factory;
     private final OrderService orderService;
+    private final GamificationService gamification;
 
     public LifecycleService(SimEngine engine, MarketDataService market, InstrumentRepo instrumentRepo,
                             PositionRepo positionRepo, AccountRepo accountRepo, SettlementRepo settlementRepo,
                             EquitySnapshotRepo snapshotRepo, PortfolioService portfolio,
-                            InstrumentFactory factory, OrderService orderService) {
+                            InstrumentFactory factory, OrderService orderService,
+                            GamificationService gamification) {
         this.engine = engine;
         this.market = market;
         this.instrumentRepo = instrumentRepo;
@@ -61,6 +64,7 @@ public class LifecycleService {
         this.portfolio = portfolio;
         this.factory = factory;
         this.orderService = orderService;
+        this.gamification = gamification;
     }
 
     @EventListener
@@ -97,6 +101,7 @@ public class LifecycleService {
             if (account.cashBalance >= 0) continue;
             record(account.id, null, evt.closedDay(), SettlementKind.MARGIN_CALL, 0,
                     "Cash " + Math.round(account.cashBalance) + " below zero after daily settlement — liquidating futures");
+            gamification.onMarginCall(account, evt.closedDay());
             liquidateFutures(account, evt.closedDay());
             orderService.notifyAccount(account.id, "MARGIN_CALL", evt.closedDay().toString());
         }
@@ -149,6 +154,7 @@ public class LifecycleService {
                     : pos.qty > 0 ? SettlementKind.OPTION_EXERCISE : SettlementKind.OPTION_ASSIGNMENT;
             account.cashBalance += cashFlow;
             pos.realizedPnl += (intrinsic - pos.avgPrice) * pos.qty * instr.contractSize;
+            gamification.onOptionSettled(account, intrinsic > 0, pos.qty, evt.closedDay());
             record(account.id, instr.id, evt.closedDay(), kind, cashFlow,
                     (intrinsic <= 0 ? "Expired worthless: " : "Cash-settled intrinsic "
                             + round4(intrinsic) + " x " + fmtQty(pos.qty) + " x " + instr.contractSize + ": ")
@@ -241,12 +247,15 @@ public class LifecycleService {
     }
 
     private void snapshotAccounts(long sessionId, LocalDate day) {
+        SessionRuntime rt = engine.runtime(sessionId);
         for (Account account : accountRepo.findBySessionId(sessionId)) {
             EquitySnapshot snap = new EquitySnapshot();
             snap.accountId = account.id;
             snap.simDate = day;
             snap.equity = portfolio.equity(account);
             snapshotRepo.save(snap);
+            gamification.onDayClosed(account, day, snap.equity, rt);
+            accountRepo.save(account); // persist any XP the day-close awards added
         }
     }
 

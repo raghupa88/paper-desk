@@ -99,13 +99,17 @@ export function ClassroomView() {
           Leaderboard {selected ? `— ${selected.name} (${selected.scenarioName})` : ''}
         </div>
         <table className="tbl num">
-          <thead><tr><th>#</th><th>Student</th><th className="!text-right">Equity</th>
+          <thead><tr><th>#</th><th>Student</th><th>Level</th><th className="!text-right">Equity</th>
             <th className="!text-right">Return</th><th className="!text-right">Max drawdown</th></tr></thead>
           <tbody>
             {state.leaderboard.map(r => (
               <tr key={r.rank}>
                 <td className="font-semibold">{r.rank}</td>
                 <td>{r.displayName}</td>
+                <td>
+                  <span className="text-desk-accent font-semibold">{r.level}</span>
+                  <span className="text-xs text-desk-dim ml-1">{r.levelName}</span>
+                </td>
                 <td className="text-right">{fmtMoney(r.equity, 0)}</td>
                 <td className={`text-right ${pnlCls(r.returnPct)}`}>{fmtPct(r.returnPct)}</td>
                 <td className="text-right text-desk-down">{r.maxDrawdownPct.toFixed(1)}%</td>

@@ -110,11 +110,15 @@ public class CohortController {
             if (account.isEmpty()) continue;
             double equity = portfolio.equity(account.get());
             double ret = (equity / account.get().startingBalance - 1) * 100;
+            var level = com.paperdesk.gamification.Levels.forXp(account.get().xp);
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("displayName", user.displayName);
             m.put("equity", equity);
             m.put("returnPct", ret);
             m.put("maxDrawdownPct", maxDrawdownPct(account.get(), equity));
+            m.put("xp", account.get().xp);
+            m.put("level", level.number());
+            m.put("levelName", level.name());
             rows.add(m);
         }
         rows.sort((a, b) -> Double.compare((Double) b.get("equity"), (Double) a.get("equity")));

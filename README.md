@@ -86,6 +86,28 @@ cd frontend && npm run typecheck && npm run build
   + starting balance); students join; leaderboard ranks by equity with return % and
   max drawdown.
 
+## Gamification — XP, levels & badges
+
+Learning is nudged with a lightweight progression system, consistent across the app:
+
+- **XP**: every fill earns XP; badges award larger one-time chunks. The header shows
+  your level and XP bar on every tab.
+- **Levels**: Observer → Apprentice → Associate → Trader → Senior Trader → Desk Head
+  → Rainmaker → Market Wizard.
+- **Badges as curriculum**: the 15 badges walk students through the syllabus — first
+  trade per instrument type, a filled limit order, diversification, a profitable day,
+  a 5-day hot streak, and the risk lessons ("Margin Call Survivor", "Theta Tuition",
+  "In The Money", "Crash Survivor").
+- **Progress tab**: level roadmap plus earned/locked badge grid; unlocks toast
+  instantly on any tab (pushed over the account WebSocket topic).
+- **Classroom tie-in**: the leaderboard shows each student's level alongside equity,
+  return % and drawdown.
+
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and PRs: backend
+`mvn test` (Temurin 21) and frontend `npm ci && typecheck && test && build` (Node 22).
+
 ## esp-js DevTools (dev mode)
 
 A **reusable, decoupled esp-js event tracer** lives in `frontend/src/devtools/` —

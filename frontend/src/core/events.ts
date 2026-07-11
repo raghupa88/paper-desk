@@ -46,6 +46,9 @@ export const EventConst = {
   rfqExecuted: 'rfqExecuted',
   ladderLoaded: 'ladderLoaded',
 
+  // gamification / progress
+  progressLoaded: 'progressLoaded',
+
   // instructor
   cohortsLoaded: 'cohortsLoaded',
   createCohortRequested: 'createCohortRequested',
@@ -60,6 +63,7 @@ export const ModelIds = {
   clock: 'clockModel',
   market: 'marketModel',
   trading: 'tradingModel',
+  progress: 'progressModel',
   chain: 'chainModel',
   fx: 'fxModel',
   instructor: 'instructorModel',

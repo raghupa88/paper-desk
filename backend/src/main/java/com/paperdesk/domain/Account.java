@@ -18,6 +18,7 @@ public class Account {
     public double marginHeld;
     @Column(name = "starting_balance")
     public double startingBalance;
+    public double xp;
     @Column(name = "created_at")
     public Instant createdAt = Instant.now();
 }

@@ -11,6 +11,7 @@ import { registerClockModel } from './models/ClockModel';
 import { registerMarketModel } from './models/MarketModel';
 import { registerTradingModel } from './models/TradingModel';
 import { registerChainModel } from './models/ChainModel';
+import { registerProgressModel } from './models/ProgressModel';
 import { registerFxModel } from './models/FxModel';
 import { registerInstructorModel } from './models/InstructorModel';
 import { EspDevTools, installEspDevTools } from './devtools';
@@ -56,6 +57,7 @@ export function bootstrap(): AppServices {
   registerMarketModel(router);
   registerTradingModel(router);
   registerChainModel(router);
+  registerProgressModel(router);
   registerFxModel(router);
   registerInstructorModel(router);
 

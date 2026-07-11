@@ -5,7 +5,7 @@ import { StompService } from './StompService';
 import { EventConst, ModelIds } from './events';
 import {
   AccountInfo, ChainData, ClockState, Cohort, LeaderboardRow, OrderView, PairLadder,
-  PortfolioView, Quote, RfqQuote, Scenario, SettlementView, UserInfo, Bar, EquityPoint,
+  PortfolioView, ProgressView, Quote, RfqQuote, Scenario, SettlementView, UserInfo, Bar, EquityPoint,
 } from './types';
 
 /**
@@ -19,7 +19,12 @@ export class DataService {
   private accountId: number | null = null;
 
   constructor(private api: ApiClient, private auth: AuthStore,
-              private stomp: StompService, private router: Router) {}
+              private stomp: StompService, private router: Router) {
+    // achievements are awarded server-side mid-flow; refresh XP/badges on unlock
+    this.stomp.accountEventHook = ev => {
+      if (ev.type === 'ACHIEVEMENT') void this.refreshProgress();
+    };
+  }
 
   // ---- auth / session ----
 
@@ -74,6 +79,7 @@ export class DataService {
     void this.refreshQuotes();
     void this.refreshPortfolio();
     void this.refreshBlotter();
+    void this.refreshProgress();
   }
 
   // ---- sim clock ----
@@ -93,6 +99,7 @@ export class DataService {
       void this.refreshPortfolio();
       void this.refreshQuotes();
       void this.refreshSettlements();
+      void this.refreshProgress();
     }
   }
 
@@ -132,6 +139,7 @@ export class DataService {
     }
     void this.refreshPortfolio();
     void this.refreshBlotter();
+    void this.refreshProgress();
   }
 
   async cancelOrder(orderId: number): Promise<void> {
@@ -160,6 +168,14 @@ export class DataService {
     if (this.accountId == null) return;
     const settlements = await this.api.get<SettlementView[]>(`/api/portfolio/${this.accountId}/settlements`);
     this.router.publishEvent(ModelIds.trading, EventConst.settlementsLoaded, settlements);
+  }
+
+  // ---- gamification ----
+
+  async refreshProgress(): Promise<void> {
+    if (this.accountId == null) return;
+    const progress = await this.api.get<ProgressView>(`/api/progress/${this.accountId}`);
+    this.router.publishEvent(ModelIds.progress, EventConst.progressLoaded, progress);
   }
 
   // ---- fx sales / trader ----

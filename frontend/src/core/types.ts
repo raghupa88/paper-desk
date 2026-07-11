@@ -209,4 +209,27 @@ export interface LeaderboardRow {
   equity: number;
   returnPct: number;
   maxDrawdownPct: number;
+  xp: number;
+  level: number;
+  levelName: string;
+}
+
+export interface BadgeView {
+  code: string;
+  title: string;
+  description: string;
+  xp: number;
+  earned: boolean;
+  earnedSimDate: string | null;
+}
+
+export interface ProgressView {
+  accountId: number;
+  xp: number;
+  level: number;
+  levelName: string;
+  levelFloorXp: number;
+  nextLevelXp: number | null;
+  earnedCount: number;
+  badges: BadgeView[];
 }
