@@ -22,6 +22,7 @@ export function ClassroomView() {
   const [balance, setBalance] = useState(100000);
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     void dataService.refreshCohorts();
@@ -39,6 +40,15 @@ export function ClassroomView() {
   const run = (fn: () => Promise<void>) => {
     setError(null);
     fn().catch(e => setError(e.message));
+  };
+
+  const exportCsv = () => {
+    if (!selected) return;
+    setError(null);
+    setExporting(true);
+    dataService.downloadLeaderboardCsv(selected.cohortId)
+      .catch(e => setError(e.message))
+      .finally(() => setExporting(false));
   };
 
   return (
@@ -100,8 +110,13 @@ export function ClassroomView() {
       </div>
 
       <div className="panel flex-1">
-        <div className="panel-title">
-          Leaderboard {selected ? `— ${selected.name} (${selected.scenarioName})` : ''}
+        <div className="panel-title flex items-center justify-between">
+          <span>Leaderboard {selected ? `— ${selected.name} (${selected.scenarioName})` : ''}</span>
+          {selected && (
+            <button className="btn text-xs normal-case" disabled={exporting} onClick={exportCsv}>
+              {exporting ? 'Exporting…' : '⬇ Export CSV'}
+            </button>
+          )}
         </div>
         <table className="tbl num">
           <thead><tr><th>#</th><th>Student</th><th>Level</th><th className="!text-right">Equity</th>
