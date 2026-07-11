@@ -272,6 +272,28 @@ export class DataService {
     this.router.publishEvent(ModelIds.instructor, EventConst.leaderboardLoaded, { cohortId, rows });
   }
 
+  /**
+   * Gradebook export. Goes around ApiClient (which is JSON-only) with a raw
+   * fetch, because a plain <a href> download can't carry the Authorization
+   * header this endpoint needs — instead we fetch the CSV as a blob and
+   * trigger the download via a throwaway object URL.
+   */
+  async downloadLeaderboardCsv(cohortId: number): Promise<void> {
+    const res = await fetch(`/api/cohorts/${cohortId}/leaderboard.csv`, {
+      headers: this.auth.token ? { Authorization: `Bearer ${this.auth.token}` } : {},
+    });
+    if (!res.ok) throw new Error('Failed to export the leaderboard');
+    const disposition = res.headers.get('Content-Disposition') ?? '';
+    const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? `leaderboard-${cohortId}.csv`;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // ---- background polling ----
 
   private startPolling() {
