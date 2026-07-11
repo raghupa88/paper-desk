@@ -40,9 +40,9 @@ export function OptionsChainView() {
   };
 
   return (
-    <div className="flex gap-4 items-start">
-      <div className="flex-1 space-y-3">
-        <div className="flex items-center gap-3">
+    <div className="flex flex-col lg:flex-row gap-4 items-start">
+      <div className="flex-1 w-full space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
           <select className="input !w-56"
                   value={underlyingId ?? ''}
                   onChange={e => publish(ModelIds.chain, EventConst.chainUnderlyingSelected,
@@ -63,7 +63,7 @@ export function OptionsChainView() {
           </div>
         </div>
 
-        <div className="panel overflow-auto max-h-[calc(100vh-220px)]">
+        <div className="panel overflow-auto max-h-96 lg:max-h-[calc(100vh-220px)]">
           <table className="tbl num">
             <thead>
               <tr>

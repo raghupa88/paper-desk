@@ -26,8 +26,8 @@ export function LoginView() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form onSubmit={submit} className="panel p-8 w-96 space-y-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <form onSubmit={submit} className="panel p-6 sm:p-8 w-full max-w-96 space-y-4">
         <div>
           <h1 className="text-2xl font-bold text-desk-accent">Paper Desk</h1>
           <p className="text-desk-dim text-sm mt-1">

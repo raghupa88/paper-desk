@@ -22,6 +22,7 @@ export function PortfolioView() {
             cash {fmtMoney(p.cash, 0)} · margin held {fmtMoney(p.marginHeld, 0)} · equity {fmtMoney(p.equity, 0)}
           </span>}
         </div>
+        <div className="overflow-x-auto">
         <table className="tbl num">
           <thead>
             <tr>
@@ -55,10 +56,12 @@ export function PortfolioView() {
               <tr><td colSpan={12} className="text-desk-dim">No open positions.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="panel">
         <div className="panel-title">Settlements &amp; lifecycle events — daily futures MTM, margin calls, expiries, swap fixings</div>
+        <div className="overflow-x-auto">
         <table className="tbl num">
           <thead><tr><th>Sim date</th><th>Kind</th><th>Instrument</th><th className="!text-right">Cash flow</th><th>Detail</th></tr></thead>
           <tbody>
@@ -75,6 +78,7 @@ export function PortfolioView() {
               <tr><td colSpan={5} className="text-desk-dim">Nothing settled yet — step a sim day with futures or options on.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

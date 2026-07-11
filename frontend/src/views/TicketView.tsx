@@ -25,7 +25,7 @@ export function TicketView() {
 
   if (!instr) {
     return (
-      <div className="panel p-4 w-72 shrink-0">
+      <div className="panel p-4 w-full lg:w-72 lg:shrink-0">
         <div className="panel-title !p-0 mb-2">Order ticket</div>
         <div className="text-desk-dim text-sm">Select an instrument from the market,
           options chain or FX view to load the ticket.</div>
@@ -53,7 +53,7 @@ export function TicketView() {
   };
 
   return (
-    <div className="panel p-4 w-72 shrink-0 space-y-3">
+    <div className="panel p-4 w-full lg:w-72 lg:shrink-0 space-y-3">
       <div className="panel-title !p-0">Order ticket {ticket.viewContext && (
         <span className="text-desk-warn">({ticket.viewContext.toLowerCase()} view)</span>)}</div>
       <div>

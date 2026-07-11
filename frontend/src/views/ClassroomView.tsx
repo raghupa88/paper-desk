@@ -52,8 +52,8 @@ export function ClassroomView() {
   };
 
   return (
-    <div className="flex gap-4 items-start">
-      <div className="w-[380px] space-y-4">
+    <div className="flex flex-col lg:flex-row gap-4 items-start">
+      <div className="w-full lg:w-[380px] lg:shrink-0 space-y-4">
         {isInstructor && (
           <div className="panel p-4 space-y-2">
             <div className="panel-title !p-0">Create a cohort</div>
@@ -109,8 +109,8 @@ export function ClassroomView() {
         {error && <div role="alert" className="text-desk-down text-sm">{error}</div>}
       </div>
 
-      <div className="panel flex-1">
-        <div className="panel-title flex items-center justify-between">
+      <div className="panel flex-1 w-full overflow-x-auto">
+        <div className="panel-title flex flex-wrap items-center justify-between gap-2">
           <span>Leaderboard {selected ? `— ${selected.name} (${selected.scenarioName})` : ''}</span>
           {selected && (
             <button className="btn text-xs normal-case" disabled={exporting} onClick={exportCsv}>

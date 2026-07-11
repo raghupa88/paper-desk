@@ -32,9 +32,9 @@ export function FxTraderView() {
   const bookVega = fxPositions.reduce((s, p) => s + (p.vega ?? 0), 0);
 
   return (
-    <div className="flex gap-4 items-start">
-      <div className="flex-1 space-y-4">
-        <div className="panel">
+    <div className="flex flex-col lg:flex-row gap-4 items-start">
+      <div className="flex-1 w-full space-y-4">
+        <div className="panel overflow-x-auto">
           <div className="panel-title">Pairs — dealer mids (click to trade spot at market)</div>
           <table className="tbl num">
             <thead><tr><th>Pair</th><th className="!text-right">Bid</th><th className="!text-right">Mid</th><th className="!text-right">Ask</th></tr></thead>
@@ -57,7 +57,7 @@ export function FxTraderView() {
           </div>
         </div>
 
-        <div className="panel">
+        <div className="panel overflow-x-auto">
           <div className="panel-title">FX book — positions &amp; Greeks
             <span className="ml-3 normal-case text-desk-text">book Δ {fmtNum(bookDelta, 0)} · book vega {fmtNum(bookVega, 2)}</span>
           </div>
@@ -88,7 +88,7 @@ export function FxTraderView() {
         </div>
 
         {fx.ladder.map(l => (
-          <div key={l.pair} className="panel">
+          <div key={l.pair} className="panel overflow-x-auto">
             <div className="panel-title">{l.pair} risk ladder — spot {fmtNum(l.spot)}</div>
             <table className="tbl num">
               <thead><tr><th className="!text-right">Shift</th><th className="!text-right">Spot</th>

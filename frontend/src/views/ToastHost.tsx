@@ -34,7 +34,7 @@ export function ToastHost() {
   if (visible.length === 0) return null;
 
   return (
-    <div className="fixed top-14 right-4 z-50 space-y-2 w-96">
+    <div className="fixed top-14 left-4 right-4 sm:left-auto sm:right-4 z-50 space-y-2 sm:w-96">
       {visible.map(n => {
         const meta = LABELS[n.type] ?? { title: n.type, cls: 'border-desk-border', icon: '•' };
         return (

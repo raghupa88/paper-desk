@@ -36,8 +36,8 @@ export function MarketView() {
   };
 
   return (
-    <div className="flex gap-4 items-start">
-      <div className="panel w-[430px] shrink-0 max-h-[calc(100vh-140px)] overflow-auto">
+    <div className="flex flex-col lg:flex-row gap-4 items-start">
+      <div className="panel w-full lg:w-[430px] lg:shrink-0 max-h-72 lg:max-h-[calc(100vh-140px)] overflow-auto">
         <div className="panel-title">Watchlist — live simulated prices</div>
         {GROUPS.map(g => {
           const rows = market.quotes.filter(q => g.types.includes(q.type));

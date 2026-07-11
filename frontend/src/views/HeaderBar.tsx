@@ -21,13 +21,13 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
     : 100;
 
   return (
-    <header className="flex items-center gap-4 px-4 py-2 bg-desk-panel border-b border-desk-border">
+    <header className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 bg-desk-panel border-b border-desk-border">
       <span className="font-bold text-desk-accent text-lg">Paper Desk</span>
-      <span className="text-[10px] uppercase tracking-wider text-desk-warn border border-desk-warn rounded px-1.5 py-0.5">
+      <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-desk-warn border border-desk-warn rounded px-1.5 py-0.5">
         simulated
       </span>
 
-      <select className="input !w-auto" aria-label="Active trading account" value={acct?.accountId ?? ''}
+      <select className="input !w-auto max-w-[45vw] sm:max-w-none" aria-label="Active trading account" value={acct?.accountId ?? ''}
               onChange={e => {
                 const a = session.accounts.find(x => x.accountId === Number(e.target.value));
                 if (a) dataService.selectAccount(a);
@@ -40,11 +40,11 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
       </select>
       <button className="btn text-xs" onClick={onAddScenario}>+ scenario</button>
 
-      <div className="flex items-center gap-2 ml-4 num">
+      <div className="flex items-center gap-2 num">
         <span className={`w-2 h-2 rounded-full ${clock?.paused ? 'bg-desk-warn' : 'bg-desk-up animate-pulse'}`} />
         <span className="text-sm">{fmtSimTime(clock?.simTime)}</span>
         <span className="text-xs text-desk-dim">{clock?.acceleration ?? '—'}×</span>
-        <span className="text-xs text-desk-dim">float {clock ? (clock.floatingRate * 100).toFixed(2) : '—'}%</span>
+        <span className="hidden md:inline text-xs text-desk-dim">float {clock ? (clock.floatingRate * 100).toFixed(2) : '—'}%</span>
       </div>
       <div className="flex items-center gap-1">
         <button className="btn text-xs" title={clock?.paused ? 'Resume sim clock' : 'Pause sim clock'}
@@ -62,12 +62,12 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
         </select>
       </div>
 
-      <div className="ml-auto flex items-center gap-4 num text-sm">
+      <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2 num text-sm">
         {progress && (
           <div className="flex items-center gap-2" title={`${progress.levelName} — ${Math.round(progress.xp)} XP`}>
             <span className="w-6 h-6 rounded-full bg-desk-bg border border-desk-accent text-desk-accent
                              flex items-center justify-center text-xs font-bold">{progress.level}</span>
-            <div className="w-20 h-1.5 bg-desk-bg rounded-full overflow-hidden border border-desk-border">
+            <div className="hidden sm:block w-20 h-1.5 bg-desk-bg rounded-full overflow-hidden border border-desk-border">
               <div className="h-full bg-desk-accent" style={{ width: `${xpPct}%` }} />
             </div>
           </div>
@@ -81,11 +81,11 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
         {portfolio && (
           <>
             <span>Equity <strong>{fmtMoney(portfolio.equity, 0)}</strong></span>
-            <span>Day <Pnl value={portfolio.dayPnl} dp={0} /></span>
+            <span className="hidden sm:inline">Day <Pnl value={portfolio.dayPnl} dp={0} /></span>
             <Pnl value={portfolio.totalReturnPct} kind="pct" />
           </>
         )}
-        <span className="text-desk-dim">{authStore.user?.displayName}</span>
+        <span className="hidden md:inline text-desk-dim">{authStore.user?.displayName}</span>
         <button className="btn text-xs" onClick={() => dataService.logout()}>Log out</button>
       </div>
     </header>
