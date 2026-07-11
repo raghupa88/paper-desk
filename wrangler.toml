@@ -1,0 +1,35 @@
+# DRAFT — unverified against a real Cloudflare account. See docs/cd-setup-runbook.md.
+# The container-binding syntax and migrations block below are best-effort
+# from documentation research and must be corrected against the current
+# `wrangler containers` reference once real credentials are available
+# (Phase 0 validation spike in the CD plan).
+name = "paper-desk"
+main = "worker/src/index.ts"
+compatibility_date = "2026-07-01"
+
+[assets]
+directory = "frontend/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[containers]]
+class_name = "BackendContainer"
+image = "./backend/Dockerfile"
+max_instances = 1
+
+[[durable_objects.bindings]]
+name = "BACKEND_CONTAINER"
+class_name = "BackendContainer"
+
+# Durable Object classes typically need a migrations entry declaring them as
+# new — verify the exact tag Cloudflare Containers expects here.
+[[migrations]]
+tag = "v1"
+new_classes = ["BackendContainer"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (NOT set here — use `wrangler secret put <NAME>`):
+#   PAPERDESK_JWT_SECRET, SPRING_DATASOURCE_URL/USERNAME/PASSWORD,
+#   PAPERDESK_ALLOWED_ORIGIN, ORACLE_WALLET_B64 (conditional)
