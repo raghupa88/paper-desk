@@ -29,7 +29,7 @@ export function ScenarioPicker({ onDone, canCancel }: { onDone: () => void; canC
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="max-w-3xl w-full space-y-4">
-        <div className="flex items-baseline justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-desk-accent">Pick a market scenario</h1>
             <p className="text-desk-dim text-sm">
@@ -37,10 +37,10 @@ export function ScenarioPicker({ onDone, canCancel }: { onDone: () => void; canC
               rejoin the same scenario any time — your account persists per scenario.
             </p>
           </div>
-          {canCancel && <button className="btn" onClick={onDone}>Back to desk</button>}
+          {canCancel && <button className="btn shrink-0" onClick={onDone}>Back to desk</button>}
         </div>
         {error && <div className="text-desk-down text-sm">{error}</div>}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {session.scenarios.map(s => {
             const acct = existing.get(s.id);
             return (

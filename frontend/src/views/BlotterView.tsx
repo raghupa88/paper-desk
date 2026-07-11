@@ -16,6 +16,7 @@ export function BlotterView() {
   return (
     <div className="panel">
       <div className="panel-title">Trade history — every order and fill (sim time)</div>
+      <div className="overflow-x-auto">
       <table className="tbl num">
         <thead>
           <tr>
@@ -48,6 +49,7 @@ export function BlotterView() {
             <tr><td colSpan={11} className="text-desk-dim">No orders yet.</td></tr>}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

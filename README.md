@@ -216,6 +216,39 @@ mvn spring-boot:run
 - **Focus is always visible**: `.input`/`.btn` use a `focus-visible` ring instead of
   suppressing the outline with only a subtle border-color change.
 
+## Mobile & responsive design
+
+The desk adapts down to a 375px phone viewport with no page-level horizontal
+scroll on any tab, verified with Playwright at phone (375px), tablet (768px),
+and desktop (1440px) widths:
+
+- **Header and nav wrap instead of clipping**: the header bar (`HeaderBar.tsx`)
+  is a `flex-wrap` row that progressively sheds secondary chrome as space
+  shrinks — the "simulated" badge, float-rate readout, XP bar, day P&L, and
+  username hide below `sm`/`md` breakpoints while account switching, level,
+  streak, and log-out stay visible at every width. The tab strip
+  (`App.tsx`) scrolls horizontally within its own bar (`overflow-x-auto`)
+  rather than wrapping the page.
+- **Two-column ticket layouts stack vertically**: Market, Options Chain, FX
+  Sales, FX Trader, and Classroom all pair a data panel with a fixed-width
+  side panel (order ticket, RFQ form, cohort tools) on desktop; below the
+  `lg` breakpoint they stack to a single column (`flex-col lg:flex-row`)
+  with the side panel going full-width.
+- **Dense tables get contained horizontal scroll, not page overflow**: the
+  options chain (11 columns), FX book/risk ladder, portfolio positions (12
+  columns), settlements, and the blotter (11 columns) each sit inside their
+  own `overflow-x-auto` wrapper. On a narrow phone the table itself scrolls
+  sideways within its panel — the surrounding page layout never does.
+- **Card grids reflow by breakpoint**: mission cards, earned badges, and
+  locked badges go from 1 column on phone to 2 (`sm`) to 3 (`lg`) rather
+  than a fixed 2/3-column grid that would otherwise crush text at phone
+  width.
+- **Deliberate scope boundary**: this is a contained-overflow pass for a
+  desktop-first trading desk, not a ground-up mobile-native redesign —
+  dense multi-column tables (options chain, FX book) remain genuinely
+  easier to read on a wider screen and are expected to be scrolled
+  horizontally in their panel on a phone, by design.
+
 ## In-app teaching layer
 
 Delta, gamma, theta, vega, initial margin, mark-to-market, notional, and "pay fixed

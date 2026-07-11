@@ -60,13 +60,13 @@ function Shell() {
   return (
     <div className="min-h-screen flex flex-col">
       <HeaderBar onAddScenario={() => setPickingScenario(true)} />
-      <nav className="flex gap-1 px-4 border-b border-desk-border bg-desk-panel">
+      <nav className="flex gap-1 px-4 border-b border-desk-border bg-desk-panel overflow-x-auto whitespace-nowrap">
         {TABS.map(t => (
-          <div key={t.id} className={`tab ${tab === t.id ? 'tab-active' : ''}`}
+          <div key={t.id} className={`tab shrink-0 ${tab === t.id ? 'tab-active' : ''}`}
                onClick={() => setTab(t.id)}>{t.label}</div>
         ))}
       </nav>
-      <main className="flex-1 p-4 overflow-auto">
+      <main className="flex-1 p-3 sm:p-4 overflow-auto">
         {tab === 'dashboard' && <DashboardView />}
         {tab === 'market' && <MarketView />}
         {tab === 'options' && <OptionsChainView />}

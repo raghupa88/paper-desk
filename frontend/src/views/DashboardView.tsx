@@ -7,7 +7,7 @@ import { EquityChart } from './ChartView';
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="panel p-4 flex-1">
+    <div className="panel p-4 flex-1 min-w-[140px]">
       <div className="text-xs uppercase tracking-wider text-desk-dim">{label}</div>
       <div className="text-xl font-semibold num mt-1">{value}</div>
     </div>
@@ -20,7 +20,7 @@ export function DashboardView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Stat label="Portfolio value" value={fmtMoney(p?.equity, 0)} />
         <Stat label="Cash" value={fmtMoney(p?.cash, 0)} />
         <Stat label="Margin held" value={fmtMoney(p?.marginHeld, 0)} />
@@ -28,15 +28,15 @@ export function DashboardView() {
         <Stat label="Total return" value={<Pnl value={p?.totalReturnPct} kind="pct" />} />
       </div>
 
-      <div className="flex gap-4 items-start">
-        <div className="panel flex-1 p-3">
+      <div className="flex flex-col lg:flex-row gap-4 items-start">
+        <div className="panel flex-1 w-full p-3">
           <div className="panel-title !p-0 mb-2">Equity curve (end of sim day)</div>
           <EquityChart points={state.equityHistory} />
           {state.equityHistory.length === 0 &&
             <div className="text-desk-dim text-xs mt-2">Snapshots appear as sim days close.</div>}
         </div>
 
-        <div className="panel w-96 shrink-0">
+        <div className="panel w-full lg:w-96 lg:shrink-0">
           <div className="panel-title">Open positions</div>
           <table className="tbl">
             <thead><tr><th>Symbol</th><th className="!text-right">Qty</th><th className="!text-right">Unrlzd P&L</th></tr></thead>

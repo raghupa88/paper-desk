@@ -34,8 +34,8 @@ export function FxSalesView() {
   const pair = fx.pairs.find(p => p.instrumentId === fx.rfq.underlyingId);
 
   return (
-    <div className="flex gap-4 items-start">
-      <div className="panel p-5 w-[420px] space-y-3">
+    <div className="flex flex-col lg:flex-row gap-4 items-start">
+      <div className="panel p-5 w-full lg:w-[420px] lg:shrink-0 space-y-3">
         <div className="panel-title !p-0">Client RFQ — FX option</div>
         <p className="text-xs text-desk-dim">
           You are the salesperson: price a client's option request. The client pays
@@ -89,7 +89,7 @@ export function FxSalesView() {
         {fx.quoteError && <div role="alert" className="text-desk-down text-xs">{fx.quoteError}</div>}
       </div>
 
-      <div className="space-y-4 w-[420px]">
+      <div className="space-y-4 w-full lg:w-[420px] lg:shrink-0">
         {fx.quote && (
           <div className="panel p-5 space-y-2">
             <div className="panel-title !p-0">Quote — {fx.quote.pair} {fx.quote.callPut} {fmtNum(fx.quote.strike)} exp {fx.quote.expiryDate}</div>

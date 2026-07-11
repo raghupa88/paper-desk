@@ -26,7 +26,7 @@ export function ProgressView() {
 
   return (
     <div className="space-y-4 max-w-5xl">
-      <div className="panel p-6 flex items-center gap-6">
+      <div className="panel p-6 flex flex-wrap items-center gap-6">
         <div className="w-20 h-20 rounded-full bg-desk-bg border-2 border-desk-accent
                         flex items-center justify-center text-3xl font-bold text-desk-accent num">
           {p.level}
@@ -51,7 +51,7 @@ export function ProgressView() {
           Missions — guided exercises
           <span className="ml-3 normal-case text-desk-text">{missionsDone}/{state.missions.length} complete</span>
         </div>
-        <div className="grid grid-cols-2 gap-3 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
           {state.missions.map(m => (
             <div key={m.code}
                  className={`border rounded-lg p-3 ${m.completed ? 'border-desk-up' : 'border-desk-border'}
@@ -76,7 +76,7 @@ export function ProgressView() {
 
       <div className="panel">
         <div className="panel-title">Earned</div>
-        <div className="grid grid-cols-3 gap-3 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
           {earned.map(b => (
             <div key={b.code}
                  className={`border rounded-lg p-3 ${state.recentUnlocks.includes(b.code)
@@ -92,7 +92,7 @@ export function ProgressView() {
         </div>
 
         <div className="panel-title border-t border-desk-border">Still locked — your curriculum</div>
-        <div className="grid grid-cols-3 gap-3 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
           {locked.map(b => (
             <div key={b.code} className="border border-desk-border/50 rounded-lg p-3 opacity-60">
               <div className="font-semibold">🔒 {b.title}
