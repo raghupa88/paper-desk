@@ -8,3 +8,6 @@ dist/
 *.iml
 .DS_Store
 frontend/coverage/
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/

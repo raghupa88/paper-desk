@@ -128,8 +128,37 @@ evaluated right after every fill and every day-roll (`MissionEvaluationService`,
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main`/`claude/**`
-and every PR into `main`: backend `mvn test` (Temurin 21) and frontend
-`npm ci && typecheck && test && build` (Node 22).
+and every PR into `main`: backend `mvn test` (Temurin 21), frontend
+`npm ci && typecheck && test && build` (Node 22), and an E2E job that runs after
+both — see below.
+
+## End-to-end tests
+
+`e2e/` is a real Playwright test project (`@playwright/test`, not the unit-test
+mocks used elsewhere) that drives the actual backend and the actual webpack dev
+server together — the same two processes a developer runs locally
+(`playwright.config.ts`'s `webServer` array starts both, health-checking
+`/actuator/health` and `http://localhost:3000` before tests begin). Each test
+signs up its own unique user (`tests/helpers.ts`), so specs run safely in
+parallel against one shared backend and one shared in-memory H2 database for
+the whole run.
+
+Coverage spans every major flow: auth (signup/login/logout/session-resume),
+the scenario picker, spot equity trading, the options chain (buy, Greeks,
+expiry switching), futures (margin held, daily mark-to-market settlement),
+FX (spot trading, the dealer-mid options chain, the Sales RFQ flow, the risk
+ladder), forwards & swaps (no daily margin on forwards, periodic swap
+fixings), the blotter (fills, cancelling a resting limit order), gamification
+(missions/badges/XP/toasts), the classroom (instructor creates a cohort,
+student joins by code, leaderboard), the instructor CSV export, the sim clock
+controls, the standalone DevTools window, and mobile/responsive layout
+(no page-level horizontal overflow at 375/768/1440px, across every tab).
+
+Run locally: `cd e2e && npm ci && npx playwright test` (starts both servers
+automatically; add `--workers=1` if you want deterministic single-threaded
+output while debugging). `npx playwright test tests/<file>.spec.ts` runs one
+file. `npx playwright show-trace <path>` opens a captured trace from a
+failure (traces/screenshots are captured on failure only).
 
 ## esp-js DevTools — runs as a separate process, works in production
 
