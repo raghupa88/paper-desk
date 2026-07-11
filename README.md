@@ -205,8 +205,33 @@ mvn spring-boot:run
 - Shorting spot/options requires no margin; futures margin is initial/maintenance
   with a simple liquidate-on-negative-cash rule.
 - Forwards/swaps are uncollateralized OTC teaching instruments.
-- WebSocket topics are unauthenticated (simulated data only); JWT secret in
-  `application.yml` is a dev default.
+- JWT secret in `application.yml` is a dev default — replace it before any real deployment.
+
+## WebSocket/STOMP topic security
+
+`/topic/account/{accountId}` streams a student's live fills, margin calls, and
+achievement/mission unlocks — without protection, any other logged-in student could
+guess an account id (they're sequential) and subscribe to a classmate's feed. The
+HTTP upgrade handshake for `/ws` is intentionally left open (a browser `WebSocket`
+handshake can't carry a custom `Authorization` header), so both authentication and
+per-topic authorization happen one layer up, on the STOMP frames themselves, via
+`StompAuthChannelInterceptor` on the client inbound channel:
+
+- **CONNECT** must carry a valid JWT as a STOMP header — the frontend sends it via
+  `@stomp/stompjs`'s `connectHeaders` (`StompService.setToken()`), not an HTTP header.
+  No token, no connection: the client only activates once authenticated and fully
+  deactivates on logout.
+- **SUBSCRIBE** to `/topic/account/{accountId}` is only allowed when the connected
+  user owns that account; `/topic/clock/**` and `/topic/prices/**` carry no
+  student-identifying data, so any authenticated session may subscribe.
+
+Verified three ways: a focused unit test of the interceptor's branches
+(`StompAuthChannelInterceptorTest`), a wiring test confirming it's actually
+registered on Spring's real `clientInboundChannel` (`WebSocketAuthWiringTest`), and
+a live check sending raw STOMP wire frames from a real browser WebSocket against the
+running server — unauthenticated CONNECT rejected, valid CONNECT accepted, SUBSCRIBE
+to another account's topic rejected, and a genuine trade's fill message delivered
+end-to-end to the owning account's own subscription.
 
 ## Repository layout
 
