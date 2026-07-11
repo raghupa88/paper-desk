@@ -71,6 +71,12 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
             </div>
           </div>
         )}
+        {session.streak && session.streak.currentStreak > 0 && (
+          <span className="flex items-center gap-1 text-desk-warn"
+                title={`${session.streak.currentStreak}-day streak — best ${session.streak.longestStreak}. Come back tomorrow to keep it going.`}>
+            🔥 {session.streak.currentStreak}
+          </span>
+        )}
         {portfolio && (
           <>
             <span>Equity <strong>{fmtMoney(portfolio.equity, 0)}</strong></span>

@@ -1,7 +1,7 @@
 import { Router, observeEvent } from 'esp-js';
 import { ImmutableModel } from 'esp-js-polimer';
 import { EventConst, ModelIds } from '../core/events';
-import { AccountInfo, Scenario, UserInfo } from '../core/types';
+import { AccountInfo, Scenario, StreakInfo, UserInfo } from '../core/types';
 
 export interface SessionState {
   user: UserInfo | null;
@@ -9,6 +9,8 @@ export interface SessionState {
   accounts: AccountInfo[];
   activeAccount: AccountInfo | null;
   joiningScenarioId: number | null;
+  /** real-calendar-day usage streak — distinct from any single account's trading performance */
+  streak: StreakInfo | null;
 }
 
 export interface SessionModel extends ImmutableModel {
@@ -26,6 +28,12 @@ class SessionStateHandlers {
     draft.user = null;
     draft.accounts = [];
     draft.activeAccount = null;
+    draft.streak = null;
+  }
+
+  @observeEvent(EventConst.streakLoaded)
+  onStreak(draft: SessionState, streak: StreakInfo) {
+    draft.streak = streak;
   }
 
   @observeEvent(EventConst.scenariosLoaded)
@@ -54,7 +62,10 @@ export function registerSessionModel(router: Router, initialUser: UserInfo | nul
   return router.modelBuilder!<SessionModel>()
     .withInitialModel({
       modelId: ModelIds.session,
-      state: { user: initialUser, scenarios: [], accounts: [], activeAccount: null, joiningScenarioId: null },
+      state: {
+        user: initialUser, scenarios: [], accounts: [], activeAccount: null,
+        joiningScenarioId: null, streak: null,
+      },
     })
     .withStateHandlers('state', new SessionStateHandlers())
     .registerWithRouter();
