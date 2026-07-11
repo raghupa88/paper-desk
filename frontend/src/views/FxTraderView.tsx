@@ -6,6 +6,7 @@ import { FxModel, FxState } from '../models/FxModel';
 import { TradingModel, TradingState } from '../models/TradingModel';
 import { useModelState, fmtMoney, fmtNum } from './common';
 import { Pnl } from './Pnl';
+import { InfoTip } from './InfoTip';
 import { TicketView } from './TicketView';
 
 /**
@@ -62,8 +63,11 @@ export function FxTraderView() {
           </div>
           <table className="tbl num">
             <thead><tr><th>Instrument</th><th className="!text-right">Qty</th><th className="!text-right">Mark</th>
-              <th className="!text-right">Δ</th><th className="!text-right">Γ</th><th className="!text-right">Θ/day</th>
-              <th className="!text-right">Vega</th><th className="!text-right">Unrlzd</th></tr></thead>
+              <th className="!text-right">Δ<InfoTip term="delta" /></th>
+              <th className="!text-right">Γ<InfoTip term="gamma" /></th>
+              <th className="!text-right">Θ/day<InfoTip term="theta" /></th>
+              <th className="!text-right">Vega<InfoTip term="vega" /></th>
+              <th className="!text-right">Unrlzd</th></tr></thead>
             <tbody>
               {fxPositions.map(p => (
                 <tr key={p.positionId}>
@@ -88,8 +92,9 @@ export function FxTraderView() {
             <div className="panel-title">{l.pair} risk ladder — spot {fmtNum(l.spot)}</div>
             <table className="tbl num">
               <thead><tr><th className="!text-right">Shift</th><th className="!text-right">Spot</th>
-                <th className="!text-right">P&L</th><th className="!text-right">Δ</th>
-                <th className="!text-right">Γ</th><th className="!text-right">Vega</th></tr></thead>
+                <th className="!text-right">P&L</th><th className="!text-right">Δ<InfoTip term="delta" /></th>
+                <th className="!text-right">Γ<InfoTip term="gamma" /></th>
+                <th className="!text-right">Vega<InfoTip term="vega" /></th></tr></thead>
               <tbody>
                 {l.rows.map(r => (
                   <tr key={r.shiftPct} className={r.shiftPct === 0 ? 'bg-desk-bg' : ''}>

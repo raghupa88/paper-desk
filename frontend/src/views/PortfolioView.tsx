@@ -4,6 +4,7 @@ import { ModelIds } from '../core/events';
 import { TradingModel, TradingState } from '../models/TradingModel';
 import { useModelState, fmtMoney, fmtNum } from './common';
 import { Pnl } from './Pnl';
+import { InfoTip } from './InfoTip';
 
 export function PortfolioView() {
   const { dataService } = useServices();
@@ -16,7 +17,7 @@ export function PortfolioView() {
     <div className="space-y-4">
       <div className="panel">
         <div className="panel-title">
-          Positions — live mark-to-market
+          Positions — live mark-to-market<InfoTip term="markToMarket" />
           {p && <span className="ml-3 normal-case text-desk-text num">
             cash {fmtMoney(p.cash, 0)} · margin held {fmtMoney(p.marginHeld, 0)} · equity {fmtMoney(p.equity, 0)}
           </span>}
@@ -28,8 +29,9 @@ export function PortfolioView() {
               <th className="!text-right">Avg / traded</th><th className="!text-right">Mark</th>
               <th className="!text-right">Value</th><th className="!text-right">Unrlzd P&L</th>
               <th className="!text-right">Rlzd P&L</th>
-              <th className="!text-right">Δ</th><th className="!text-right">Θ/day</th>
-              <th className="!text-right">Margin</th><th>Expiry</th>
+              <th className="!text-right">Δ<InfoTip term="delta" /></th>
+              <th className="!text-right">Θ/day<InfoTip term="theta" /></th>
+              <th className="!text-right">Margin<InfoTip term="initialMargin" /></th><th>Expiry</th>
             </tr>
           </thead>
           <tbody>

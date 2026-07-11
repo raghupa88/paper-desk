@@ -6,6 +6,7 @@ import { ChainModel, ChainState } from '../models/ChainModel';
 import { MarketModel, MarketState } from '../models/MarketModel';
 import { Quote } from '../core/types';
 import { useModelState, fmtNum } from './common';
+import { InfoTip } from './InfoTip';
 import { TicketView } from './TicketView';
 
 /** Options chain: strikes x expiries with live premiums and Greeks. */
@@ -71,13 +72,17 @@ export function OptionsChainView() {
                 <th colSpan={5} className="!text-center text-desk-down">PUTS — click to trade</th>
               </tr>
               <tr>
-                <th className="!text-right">Δ</th><th className="!text-right">Γ</th>
-                <th className="!text-right">Θ/day</th><th className="!text-right">Vega</th>
-                <th className="!text-right">Premium</th>
+                <th className="!text-right">Δ<InfoTip term="delta" /></th>
+                <th className="!text-right">Γ<InfoTip term="gamma" /></th>
+                <th className="!text-right">Θ/day<InfoTip term="theta" /></th>
+                <th className="!text-right">Vega<InfoTip term="vega" /></th>
+                <th className="!text-right">Premium<InfoTip term="premium" /></th>
                 <th className="!text-center"></th>
-                <th className="!text-right">Premium</th>
-                <th className="!text-right">Δ</th><th className="!text-right">Γ</th>
-                <th className="!text-right">Θ/day</th><th className="!text-right">Vega</th>
+                <th className="!text-right">Premium<InfoTip term="premium" /></th>
+                <th className="!text-right">Δ<InfoTip term="delta" /></th>
+                <th className="!text-right">Γ<InfoTip term="gamma" /></th>
+                <th className="!text-right">Θ/day<InfoTip term="theta" /></th>
+                <th className="!text-right">Vega<InfoTip term="vega" /></th>
               </tr>
             </thead>
             <tbody>
