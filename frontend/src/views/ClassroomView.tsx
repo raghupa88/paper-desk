@@ -3,7 +3,8 @@ import { useServices } from '../AppContext';
 import { ModelIds } from '../core/events';
 import { InstructorModel, InstructorState } from '../models/InstructorModel';
 import { SessionModel } from '../models/SessionModel';
-import { useModelState, fmtMoney, fmtPct, pnlCls } from './common';
+import { useModelState, fmtMoney } from './common';
+import { Pnl } from './Pnl';
 
 /**
  * The lightweight classroom layer. Instructors create cohorts (each gets its
@@ -46,14 +47,17 @@ export function ClassroomView() {
         {isInstructor && (
           <div className="panel p-4 space-y-2">
             <div className="panel-title !p-0">Create a cohort</div>
-            <input className="input" placeholder="Cohort name (e.g. FIN301 Spring)" value={name}
+            <label htmlFor="cohortName" className="sr-only">Cohort name</label>
+            <input id="cohortName" className="input" placeholder="Cohort name (e.g. FIN301 Spring)" value={name}
                    onChange={e => setName(e.target.value)} />
-            <select className="input" value={scenarioId}
+            <label htmlFor="cohortScenario" className="sr-only">Scenario</label>
+            <select id="cohortScenario" className="input" value={scenarioId}
                     onChange={e => setScenarioId(Number(e.target.value))}>
               <option value="" disabled>Assign a scenario…</option>
               {session.scenarios.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
-            <input className="input" type="number" step={1000} min={1000} value={balance}
+            <label htmlFor="cohortBalance" className="sr-only">Starting balance</label>
+            <input id="cohortBalance" className="input" type="number" step={1000} min={1000} value={balance}
                    onChange={e => setBalance(Number(e.target.value))} />
             <button className="btn btn-accent w-full" disabled={!name || scenarioId === '' || state.busy}
                     onClick={() => run(() => dataService.createCohort(name, scenarioId as number, balance))}>
@@ -65,7 +69,8 @@ export function ClassroomView() {
         <div className="panel p-4 space-y-2">
           <div className="panel-title !p-0">Join a cohort</div>
           <div className="flex gap-2">
-            <input className="input" placeholder="Join code" value={joinCode}
+            <label htmlFor="joinCode" className="sr-only">Join code</label>
+            <input id="joinCode" className="input" placeholder="Join code" value={joinCode}
                    onChange={e => setJoinCode(e.target.value.toUpperCase())} />
             <button className="btn btn-accent" disabled={!joinCode || state.busy}
                     onClick={() => run(() => dataService.joinCohort(joinCode))}>Join</button>
@@ -91,7 +96,7 @@ export function ClassroomView() {
           ))}
           {state.cohorts.length === 0 && <div className="p-4 text-desk-dim text-sm">No cohorts yet.</div>}
         </div>
-        {error && <div className="text-desk-down text-sm">{error}</div>}
+        {error && <div role="alert" className="text-desk-down text-sm">{error}</div>}
       </div>
 
       <div className="panel flex-1">
@@ -111,7 +116,7 @@ export function ClassroomView() {
                   <span className="text-xs text-desk-dim ml-1">{r.levelName}</span>
                 </td>
                 <td className="text-right">{fmtMoney(r.equity, 0)}</td>
-                <td className={`text-right ${pnlCls(r.returnPct)}`}>{fmtPct(r.returnPct)}</td>
+                <td className="text-right"><Pnl value={r.returnPct} kind="pct" /></td>
                 <td className="text-right text-desk-down">{r.maxDrawdownPct.toFixed(1)}%</td>
               </tr>
             ))}
