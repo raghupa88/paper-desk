@@ -127,8 +127,9 @@ evaluated right after every fill and every day-roll (`MissionEvaluationService`,
 
 ## CI
 
-GitHub Actions (`ci/github-actions-ci.yml` — move to `.github/workflows/ci.yml` to activate; see `ci/README.md`) runs on pushes and PRs: backend
-`mvn test` (Temurin 21) and frontend `npm ci && typecheck && test && build` (Node 22).
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main`/`claude/**`
+and every PR into `main`: backend `mvn test` (Temurin 21) and frontend
+`npm ci && typecheck && test && build` (Node 22).
 
 ## esp-js DevTools — runs as a separate process, works in production
 
