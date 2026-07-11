@@ -5,6 +5,7 @@ import { EventConst, ModelIds } from '../core/events';
 import { SessionModel } from '../models/SessionModel';
 import { TradingModel, TicketState } from '../models/TradingModel';
 import { useModelState, fmtMoney, fmtNum } from './common';
+import { InfoTip } from './InfoTip';
 
 /**
  * The order ticket. Instrument-aware: shows premium/Greeks for options,
@@ -99,19 +100,19 @@ export function TicketView() {
         )}
         {marginNeeded != null && (
           <div className="flex justify-between text-desk-warn">
-            <span>Initial margin required</span><span>{fmtMoney(marginNeeded)}</span></div>
+            <span>Initial margin required<InfoTip term="initialMargin" /></span><span>{fmtMoney(marginNeeded)}</span></div>
         )}
         {instr.type === 'SWAP' && (
           <>
-            <div className="flex justify-between"><span className="text-desk-dim">Notional</span>
+            <div className="flex justify-between"><span className="text-desk-dim">Notional<InfoTip term="notional" /></span>
               <span>{fmtMoney(instr.notional, 0)}</span></div>
             <div className="flex justify-between"><span className="text-desk-dim">Fixed rate</span>
               <span>{((instr.fixedRate ?? 0) * 100).toFixed(2)}%</span></div>
-            <div className="text-desk-dim">BUY = pay fixed / receive floating</div>
+            <div className="text-desk-dim">BUY = pay fixed / receive floating<InfoTip term="fixedFloating" /></div>
           </>
         )}
         {instr.greeks && (
-          <div className="flex justify-between"><span className="text-desk-dim">Theta/day (per contract)</span>
+          <div className="flex justify-between"><span className="text-desk-dim">Theta/day (per contract)<InfoTip term="theta" /></span>
             <span>{fmtMoney(instr.greeks.theta * instr.contractSize)}</span></div>
         )}
         {instr.expiryDate && (
