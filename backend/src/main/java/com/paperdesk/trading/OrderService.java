@@ -7,6 +7,7 @@ import com.paperdesk.domain.Instrument;
 import com.paperdesk.domain.Position;
 import com.paperdesk.domain.TradeOrder;
 import com.paperdesk.gamification.GamificationService;
+import com.paperdesk.gamification.MissionEvaluationService;
 import com.paperdesk.repo.AccountRepo;
 import com.paperdesk.repo.FillRepo;
 import com.paperdesk.repo.OrderRepo;
@@ -19,6 +20,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +41,12 @@ public class OrderService {
     private final SimEngine engine;
     private final SimpMessagingTemplate ws;
     private final GamificationService gamification;
+    private final MissionEvaluationService missions;
 
     public OrderService(OrderRepo orderRepo, FillRepo fillRepo, AccountRepo accountRepo,
                         PositionRepo positionRepo, MarketDataService market, SimEngine engine,
-                        SimpMessagingTemplate ws, GamificationService gamification) {
+                        SimpMessagingTemplate ws, GamificationService gamification,
+                        MissionEvaluationService missions) {
         this.orderRepo = orderRepo;
         this.fillRepo = fillRepo;
         this.accountRepo = accountRepo;
@@ -51,6 +55,7 @@ public class OrderService {
         this.engine = engine;
         this.ws = ws;
         this.gamification = gamification;
+        this.missions = missions;
     }
 
     @Transactional
@@ -155,7 +160,9 @@ public class OrderService {
             return;
         }
         applyFill(order, account, instr, price);
-        gamification.onFill(account, instr, order, engine.runtime(instr.sessionId).simDate());
+        LocalDate simDate = engine.runtime(instr.sessionId).simDate();
+        gamification.onFill(account, instr, order, simDate);
+        missions.evaluateAndAward(account, simDate);
         Fill fill = new Fill();
         fill.orderId = order.id;
         fill.price = price;

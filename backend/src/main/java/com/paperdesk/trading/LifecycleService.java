@@ -8,6 +8,7 @@ import com.paperdesk.domain.Instrument;
 import com.paperdesk.domain.Position;
 import com.paperdesk.domain.Settlement;
 import com.paperdesk.gamification.GamificationService;
+import com.paperdesk.gamification.MissionEvaluationService;
 import com.paperdesk.repo.AccountRepo;
 import com.paperdesk.repo.EquitySnapshotRepo;
 import com.paperdesk.repo.InstrumentRepo;
@@ -48,12 +49,13 @@ public class LifecycleService {
     private final InstrumentFactory factory;
     private final OrderService orderService;
     private final GamificationService gamification;
+    private final MissionEvaluationService missions;
 
     public LifecycleService(SimEngine engine, MarketDataService market, InstrumentRepo instrumentRepo,
                             PositionRepo positionRepo, AccountRepo accountRepo, SettlementRepo settlementRepo,
                             EquitySnapshotRepo snapshotRepo, PortfolioService portfolio,
                             InstrumentFactory factory, OrderService orderService,
-                            GamificationService gamification) {
+                            GamificationService gamification, MissionEvaluationService missions) {
         this.engine = engine;
         this.market = market;
         this.instrumentRepo = instrumentRepo;
@@ -65,6 +67,7 @@ public class LifecycleService {
         this.factory = factory;
         this.orderService = orderService;
         this.gamification = gamification;
+        this.missions = missions;
     }
 
     @EventListener
@@ -255,7 +258,8 @@ public class LifecycleService {
             snap.equity = portfolio.equity(account);
             snapshotRepo.save(snap);
             gamification.onDayClosed(account, day, snap.equity, rt);
-            accountRepo.save(account); // persist any XP the day-close awards added
+            missions.evaluateAndAward(account, day);
+            accountRepo.save(account); // persist any XP the day-close/mission awards added
         }
     }
 
