@@ -1,0 +1,16 @@
+# Optional: real Oracle for parity runs. Dev/tests use H2 in Oracle mode and
+# need no containers at all.
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: admin
+      APP_USER: paperdesk
+      APP_USER_PASSWORD: paperdesk
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
