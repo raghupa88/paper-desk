@@ -84,7 +84,9 @@ cd frontend && npm run typecheck && npm run build
 - **Blotter** — every order with fills, statuses, reject reasons, sales/trader tags.
 - **Classroom** — instructors create cohorts (dedicated seeded session + join code
   + starting balance); students join; leaderboard ranks by equity with return % and
-  max drawdown.
+  max drawdown. Export the standings as a CSV gradebook (`⬇ Export CSV`) —
+  `GET /api/cohorts/{id}/leaderboard.csv`, same authorization as the live leaderboard
+  (instructor or a cohort member only).
 
 ## Gamification — XP, levels & badges
 
