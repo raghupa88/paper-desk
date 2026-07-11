@@ -6,7 +6,4 @@ export default defineConfig({
     include: ['src/**/__tests__/**/*.test.ts'],
     setupFiles: ['./vitest.setup.ts'],
   },
-  esbuild: {
-    target: 'es2020',
-  },
 });

@@ -19,8 +19,13 @@ function install(router: Router, opts: ConstructorParameters<typeof EspDevTools>
 }
 
 async function flush() {
-  // BroadcastChannel delivery in Node is scheduled on the microtask/task queue
-  await new Promise(r => setTimeout(r, 0));
+  // BroadcastChannel delivery in Node is scheduled on the microtask/task
+  // queue, and can take more than a single tick to land depending on the
+  // runtime/test-runner's event loop scheduling (observed intermittently
+  // after the vitest 2->4 upgrade) — wait several ticks, not just one.
+  for (let i = 0; i < 5; i++) {
+    await new Promise(r => setTimeout(r, 0));
+  }
 }
 
 describe('EspDevTools (recorder broadcasts to a separate process, not an in-page buffer)', () => {
