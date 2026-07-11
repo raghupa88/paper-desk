@@ -214,6 +214,22 @@ mvn spring-boot:run
 - **Focus is always visible**: `.input`/`.btn` use a `focus-visible` ring instead of
   suppressing the outline with only a subtle border-color change.
 
+## In-app teaching layer
+
+Delta, gamma, theta, vega, initial margin, mark-to-market, notional, and "pay fixed
+/ receive floating" all get a small "?" affordance next to the label — in the
+options chain and FX book column headers, the portfolio table, and the order
+ticket's margin/theta/swap lines — that shows a short, plain-language definition
+tied to how this desk actually computes it (`frontend/src/core/glossary.ts`,
+`frontend/src/views/InfoTip.tsx`).
+
+Built as the accessible ARIA tooltip pattern rather than a click-toggle popover:
+it's a real `<button>` with an accessible name, shown on hover **and** on keyboard
+focus alone (no Enter/Space needed — Tab is enough), dismissible with Escape while
+still focused, and rendered via a portal to `document.body` so it's never clipped
+by the scrollable tables it mostly lives in. Verified against the real
+accessibility tree and keyboard-only navigation, not just visually.
+
 ## Teaching simplifications (by design)
 
 - Continuous 24/7 market (no weekends/holidays), one flat rate curve, implied vol =
