@@ -162,7 +162,6 @@ public class OrderService {
         applyFill(order, account, instr, price);
         LocalDate simDate = engine.runtime(instr.sessionId).simDate();
         gamification.onFill(account, instr, order, simDate);
-        missions.evaluateAndAward(account, simDate);
         Fill fill = new Fill();
         fill.orderId = order.id;
         fill.price = price;
@@ -171,6 +170,12 @@ public class OrderService {
         fillRepo.save(fill);
         order.status = OrderStatus.FILLED;
         orderRepo.save(order);
+        // MissionEvaluationService re-queries orders/positions/settlements fresh from the
+        // repos rather than using this in-memory order, so it must run only after this
+        // order's FILLED status is persisted — otherwise a mission whose steps this very
+        // fill completes (e.g. "place a trade that fills") won't be detected until the
+        // *next* fill, since its own order still reads back as NEW.
+        missions.evaluateAndAward(account, simDate);
         accountRepo.save(account);
         notifyAccount(account.id, "FILL", order.id);
     }
