@@ -67,6 +67,10 @@ module.exports = (env, argv) => {
         ],
       },
       hot: true,
+      // webpack-dev-server's own live-reload socket defaults to /ws, which
+      // collides with the app's real STOMP endpoint at /ws — move the
+      // dev-server's client socket elsewhere so /ws proxies cleanly.
+      webSocketServer: { options: { path: '/__wds_hmr' } },
       proxy: [
         { context: ['/api'], target: 'http://localhost:8080' },
         { context: ['/ws'], target: 'http://localhost:8080', ws: true },

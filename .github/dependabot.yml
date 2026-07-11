@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      # esp-js family is a mandated, tightly-coupled stack (not Redux) —
+      # its packages must move together, and react is pinned to whatever
+      # major esp-js-react actually supports as a hard (non-peer)
+      # dependency, not just what its peerDependencies range claims.
+      esp-js:
+        patterns:
+          - "esp-js*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
