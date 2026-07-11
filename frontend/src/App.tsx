@@ -18,7 +18,7 @@ import { BlotterView } from './views/BlotterView';
 import { ClassroomView } from './views/ClassroomView';
 import { ProgressView } from './views/ProgressView';
 import { ToastHost } from './views/ToastHost';
-import { EspDevToolsPanel } from './devtools';
+import { DevToolsLauncher } from './devtools/DevToolsLauncher';
 
 export type DeskTab = 'dashboard' | 'market' | 'options' | 'fx-sales' | 'fx-trader'
   | 'portfolio' | 'blotter' | 'progress' | 'classroom';
@@ -40,7 +40,7 @@ export function App({ services }: { services: AppServices }) {
     <AppContext.Provider value={services}>
       <EspRouterContextProvider router={services.router}>
         <Shell />
-        {services.devTools && <EspDevToolsPanel devTools={services.devTools} />}
+        <DevToolsLauncher />
       </EspRouterContextProvider>
     </AppContext.Provider>
   );
