@@ -1,4 +1,5 @@
 import { Router } from 'esp-js';
+import { DEVTOOLS_CHANNEL, DevToolsMessage } from './protocol';
 
 /**
  * esp-js DevTools — a reusable, decoupled event-flow tracer for esp-js apps,
@@ -10,13 +11,18 @@ import { Router } from 'esp-js';
  *  2. capture the model state snapshot that each dispatch produced (via
  *     Router.getModelObservable, unwrapping esp-js-polimer immutable models);
  *  3. forward each event + state to the Redux DevTools browser extension
- *     (if installed), one connection per esp model, so the familiar
- *     Chrome/Firefox DevTools UI can inspect esp event flow;
- *  4. expose a subscribe() feed that in-app UIs (see EspDevToolsPanel) can
- *     render as a live event log.
+ *     (if installed) — that extension is itself a separate-process viewer;
+ *  4. broadcast every event over a same-origin BroadcastChannel so the
+ *     standalone DevTools window (frontend/src/devtools/panel) — a genuinely
+ *     separate browsing context/process, not an in-page overlay — can record
+ *     and render history independently of this app's main thread.
  *
- * Intended for development mode only — call installEspDevTools() behind a
- * NODE_ENV check so production bundles carry zero overhead.
+ * This class is the thin **recorder** that must live in-page (there is no
+ * way to intercept a function call from outside its own JS realm). Nothing
+ * else does: no buffering of real history, no rendering, no polling — those
+ * live in the other window so a slow or frozen devtools view can never touch
+ * this app's frame budget, and a crash/reload of either side doesn't affect
+ * the other beyond a brief reconnect.
  */
 
 export interface EspTraceEvent {
@@ -30,8 +36,8 @@ export interface EspTraceEvent {
 }
 
 export interface EspDevToolsOptions {
-  /** ring buffer size for the in-memory trace (default 500) */
-  maxEvents?: number;
+  /** small backfill buffer kept in-page so a devtools window opened late can catch up (default 200) */
+  backfillSize?: number;
   /** event types to skip entirely — use for very chatty ticks (default []) */
   ignoredEvents?: string[];
   /** bridge into the Redux DevTools browser extension when present (default true) */
@@ -40,8 +46,6 @@ export interface EspDevToolsOptions {
   exposeOnWindow?: boolean;
 }
 
-type Listener = (event: EspTraceEvent, all: ReadonlyArray<EspTraceEvent>) => void;
-
 interface ReduxDevToolsConnection {
   init(state: unknown): void;
   send(action: { type: string; payload?: unknown }, state: unknown): void;
@@ -49,39 +53,44 @@ interface ReduxDevToolsConnection {
 
 export class EspDevTools {
   private seq = 0;
-  private buffer: EspTraceEvent[] = [];
-  private listeners = new Set<Listener>();
+  private backfill: EspTraceEvent[] = [];
   private restoreFns: Array<() => void> = [];
   private modelSubscriptions: Array<{ dispose(): void }> = [];
   private reduxConnections = new Map<string, ReduxDevToolsConnection>();
   private lastEventByModel = new Map<string, EspTraceEvent>();
-  private readonly maxEvents: number;
+  private channel: BroadcastChannel | null = null;
+  private readonly backfillSize: number;
   private readonly ignored: Set<string>;
   private readonly useRedux: boolean;
   private disposed = false;
 
   constructor(private router: Router, options: EspDevToolsOptions = {}) {
-    this.maxEvents = options.maxEvents ?? 500;
+    this.backfillSize = options.backfillSize ?? 200;
     this.ignored = new Set(options.ignoredEvents ?? []);
     this.useRedux = options.reduxDevTools ?? true;
   }
 
+  /** Recent events, for callers that want an in-page peek (e.g. tests) without opening the panel window. */
   get events(): ReadonlyArray<EspTraceEvent> {
-    return this.buffer;
-  }
-
-  subscribe(listener: Listener): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
+    return this.backfill;
   }
 
   clear() {
-    this.buffer = [];
-    this.notify({ seq: -1, time: Date.now(), modelId: '*', eventType: '@@cleared', payload: null });
+    this.backfill = [];
+    this.postMessage({ kind: 'clear' });
   }
 
-  /** Instruments the router. Returns this for chaining. */
+  /** Instruments the router and opens the broadcast channel. Returns this for chaining. */
   install(): this {
+    if (typeof BroadcastChannel !== 'undefined') {
+      this.channel = new BroadcastChannel(DEVTOOLS_CHANNEL);
+      this.channel.onmessage = (ev: MessageEvent<DevToolsMessage>) => {
+        if (ev.data?.kind === 'hello') {
+          this.postMessage({ kind: 'backfill', events: this.backfill });
+        }
+      };
+    }
+
     const router = this.router as any;
 
     const originalPublish = router.publishEvent;
@@ -117,7 +126,8 @@ export class EspDevTools {
     this.restoreFns = [];
     this.modelSubscriptions.forEach(s => s.dispose());
     this.modelSubscriptions = [];
-    this.listeners.clear();
+    this.channel?.close();
+    this.channel = null;
   }
 
   private record(modelId: string, eventType: string, payload: unknown) {
@@ -129,10 +139,10 @@ export class EspDevTools {
       eventType,
       payload: safeSnapshot(payload),
     };
-    this.buffer.push(traced);
-    if (this.buffer.length > this.maxEvents) this.buffer.splice(0, this.buffer.length - this.maxEvents);
+    this.backfill.push(traced);
+    if (this.backfill.length > this.backfillSize) this.backfill.splice(0, this.backfill.length - this.backfillSize);
     if (modelId !== '*') this.lastEventByModel.set(modelId, traced);
-    this.notify(traced);
+    this.postMessage({ kind: 'event', event: traced });
   }
 
   private observeModel(modelId: string) {
@@ -142,7 +152,7 @@ export class EspDevTools {
         const last = this.lastEventByModel.get(modelId);
         if (last && last.state === undefined) {
           last.state = state;
-          this.notify(last);
+          this.postMessage({ kind: 'event', event: last }); // re-send with the state now attached
         }
         this.sendToReduxDevTools(modelId, last?.eventType ?? '@@modelUpdate', last?.payload, state);
       });
@@ -166,10 +176,8 @@ export class EspDevTools {
     conn.send({ type: eventType, payload }, state);
   }
 
-  private notify(event: EspTraceEvent) {
-    this.listeners.forEach(l => {
-      try { l(event, this.buffer); } catch { /* a bad listener must not break dispatch */ }
-    });
+  private postMessage(msg: DevToolsMessage) {
+    try { this.channel?.postMessage(msg); } catch { /* channel closed mid-flight; drop it */ }
   }
 }
 
@@ -192,7 +200,9 @@ function safeSnapshot(value: unknown): unknown {
 }
 
 /**
- * Entry point: instrument a router for development tracing.
+ * Entry point: instrument a router for tracing. Cheap — recording is a
+ * BroadcastChannel postMessage, no rendering and no growing buffer of
+ * consequence happen in this process.
  *
  *   const devTools = installEspDevTools(router, {ignoredEvents: ['pricesTick']});
  */

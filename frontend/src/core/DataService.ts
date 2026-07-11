@@ -4,7 +4,7 @@ import { AuthStore } from './AuthStore';
 import { StompService } from './StompService';
 import { EventConst, ModelIds } from './events';
 import {
-  AccountInfo, ChainData, ClockState, Cohort, LeaderboardRow, OrderView, PairLadder,
+  AccountInfo, ChainData, ClockState, Cohort, LeaderboardRow, MissionView, OrderView, PairLadder,
   PortfolioView, ProgressView, Quote, RfqQuote, Scenario, SettlementView, UserInfo, Bar, EquityPoint,
 } from './types';
 
@@ -20,9 +20,12 @@ export class DataService {
 
   constructor(private api: ApiClient, private auth: AuthStore,
               private stomp: StompService, private router: Router) {
-    // achievements are awarded server-side mid-flow; refresh XP/badges on unlock
+    // achievements/missions are awarded server-side mid-flow; refresh on unlock
     this.stomp.accountEventHook = ev => {
-      if (ev.type === 'ACHIEVEMENT') void this.refreshProgress();
+      if (ev.type === 'ACHIEVEMENT' || ev.type === 'MISSION_COMPLETE') {
+        void this.refreshProgress();
+        void this.refreshMissions();
+      }
     };
   }
 
@@ -80,6 +83,7 @@ export class DataService {
     void this.refreshPortfolio();
     void this.refreshBlotter();
     void this.refreshProgress();
+    void this.refreshMissions();
   }
 
   // ---- sim clock ----
@@ -100,6 +104,7 @@ export class DataService {
       void this.refreshQuotes();
       void this.refreshSettlements();
       void this.refreshProgress();
+      void this.refreshMissions();
     }
   }
 
@@ -140,6 +145,7 @@ export class DataService {
     void this.refreshPortfolio();
     void this.refreshBlotter();
     void this.refreshProgress();
+    void this.refreshMissions();
   }
 
   async cancelOrder(orderId: number): Promise<void> {
@@ -176,6 +182,12 @@ export class DataService {
     if (this.accountId == null) return;
     const progress = await this.api.get<ProgressView>(`/api/progress/${this.accountId}`);
     this.router.publishEvent(ModelIds.progress, EventConst.progressLoaded, progress);
+  }
+
+  async refreshMissions(): Promise<void> {
+    if (this.accountId == null) return;
+    const missions = await this.api.get<MissionView[]>(`/api/missions/${this.accountId}`);
+    this.router.publishEvent(ModelIds.progress, EventConst.missionsLoaded, missions);
   }
 
   // ---- fx sales / trader ----

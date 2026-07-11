@@ -233,3 +233,17 @@ export interface ProgressView {
   earnedCount: number;
   badges: BadgeView[];
 }
+
+export interface MissionStepView {
+  description: string;
+  done: boolean;
+}
+
+export interface MissionView {
+  code: string;
+  title: string;
+  description: string;
+  xp: number;
+  completed: boolean;
+  steps: MissionStepView[];
+}

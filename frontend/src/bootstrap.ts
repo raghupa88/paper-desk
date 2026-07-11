@@ -14,24 +14,23 @@ import { registerChainModel } from './models/ChainModel';
 import { registerProgressModel } from './models/ProgressModel';
 import { registerFxModel } from './models/FxModel';
 import { registerInstructorModel } from './models/InstructorModel';
-import { EspDevTools, installEspDevTools } from './devtools';
+import { installDevToolsActivation } from './devtools';
 
 export interface AppServices {
   router: Router;
   container: Container;
   authStore: AuthStore;
   dataService: DataService;
-  devTools: EspDevTools | null;
 }
 
-/** Composition root: router, devtools, DI container, services and polimer models. */
+/** Composition root: router, devtools activation, DI container, services and polimer models. */
 export function bootstrap(): AppServices {
   const router = new Router();
 
-  // instrument the router before any model registers so the devtools sees them all
-  const devTools = process.env.NODE_ENV === 'development'
-    ? installEspDevTools(router, { maxEvents: 500 })
-    : null;
+  // Instrument the router before any model registers so the devtools recorder
+  // (when active — see devtools/activation.ts) sees every model from the start.
+  // The recorder itself is a lazily-loaded chunk; this call is cheap in every mode.
+  installDevToolsActivation(router, { backfillSize: 200 });
 
   const container = new Container();
   container.registerInstance('router', router);
@@ -66,5 +65,5 @@ export function bootstrap(): AppServices {
     dataService.bootstrap().catch(() => dataService.logout());
   }
 
-  return { router, container, authStore, dataService, devTools };
+  return { router, container, authStore, dataService };
 }

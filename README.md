@@ -103,30 +103,76 @@ Learning is nudged with a lightweight progression system, consistent across the 
 - **Classroom tie-in**: the leaderboard shows each student's level alongside equity,
   return % and drawdown.
 
+## Guided missions
+
+Beyond single-action badges, seven **missions** string together several trades into a
+strategy exercise, evaluated live from the account's actual orders/positions/settlements
+(no separate progress bookkeeping to drift out of sync):
+
+First Steps · Covered Call Writer · Protective Put · Long Straddle · Futures Settlement
+Lab · FX Desk Rotation · Swap Lab.
+
+Each mission has 2 checklist steps shown in the Progress tab; completing all of them
+persists a one-time completion, awards XP, and pushes a `MISSION_COMPLETE` toast —
+evaluated right after every fill and every day-roll (`MissionEvaluationService`,
+`GET /api/missions/{accountId}`).
+
 ## CI
 
 GitHub Actions (`ci/github-actions-ci.yml` — move to `.github/workflows/ci.yml` to activate; see `ci/README.md`) runs on pushes and PRs: backend
 `mvn test` (Temurin 21) and frontend `npm ci && typecheck && test && build` (Node 22).
 
-## esp-js DevTools (dev mode)
+## esp-js DevTools — runs as a separate process, works in production
 
-A **reusable, decoupled esp-js event tracer** lives in `frontend/src/devtools/` —
-it depends only on `esp-js`, not on any app code, so it can be dropped into any
-esp-js application:
+A **reusable, decoupled esp-js event tracer**, architecturally modeled on how the
+real Redux DevTools browser extension works: the extension's panel UI is not part of
+the inspected page — it lives in its own extension process and talks to the page over
+`window.postMessage`. We can't ship a browser extension for a teaching app students
+install ad hoc, so instead the **DevTools panel is a second, independent web page**
+(`devtools.html`, its own webpack entry, its own bundle) that you open as a normal
+browser tab or window. Chrome gives a new tab its own renderer process
+(site-per-process), so this gets equivalent isolation to the extension model without
+extension packaging: if the app tab hangs, reloads, or crashes, the DevTools tab is
+unaffected and keeps its history.
+
+**Two independent processes, one contract**: `frontend/src/devtools/protocol.ts` — a
+same-origin [`BroadcastChannel`](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API)
+named `paperdesk-esp-devtools`. Nothing else couples them:
+
+- **The recorder** (`espDevTools.ts`) runs inside the app, because intercepting
+  `Router.publishEvent`/`broadcastEvent`/`addModel` calls is only possible from inside
+  the same JS realm that makes them. It does the minimum: timestamp, model id, event
+  type, payload, a post-dispatch state snapshot, `channel.postMessage(...)`. No
+  rendering, no growing history — it keeps only a small 200-event backfill so a panel
+  opened late can catch up.
+- **The panel** (`devtools/panel/PanelApp.tsx`, served at `/devtools.html`) has zero
+  imports from the app. It just listens on the channel, keeps up to 2000 events, and
+  renders the filterable log + payload/state inspector. It's the process doing all the
+  heavy lifting, so it can never affect the app's frame budget.
+- The Redux DevTools **browser extension** bridge still works too, independently —
+  with the extension installed, each esp model also appears as a store there.
+
+**Works in production, on demand — not eagerly bundled.** In dev builds the recorder
+installs automatically. In production the recorder is a separate ~3&nbsp;KB lazy chunk
+(`import()`) that is never downloaded unless devtools is actually turned on, so a
+default production load carries zero extra bytes and zero extra work. Turn it on to
+debug a live/deployed instance:
+
+- Visit `https://your-deployment/?devtools=1` (persists via `localStorage`; `?devtools=0` turns it back off), or
+- Press **Ctrl+Shift+E**, or click the small `esp ⚡` badge (bottom-right, always present, a few hundred bytes) — either opens `/devtools.html` in a new window and installs the recorder.
 
 ```ts
-import {installEspDevTools} from './devtools';
-const devTools = installEspDevTools(router, {ignoredEvents: ['someChattyTick']});
+// only ever called from inside activation.ts's dynamic import — see src/devtools/activation.ts
+import {installEspDevTools} from './espDevTools';
+const devTools = installEspDevTools(router, {ignoredEvents: ['pricesTick']});
 ```
 
-- Records every `publishEvent`/`broadcastEvent` (model id, event type, payload)
-  plus the post-dispatch model state snapshot.
-- **Redux DevTools bridge**: with the browser extension installed, each esp model
-  appears as a store (`esp:tradingModel`, …) and events stream in as actions with
-  state — inspect esp flow in the familiar UI.
-- **In-app overlay**: toggle with **Ctrl+Shift+E** (or the floating `esp ⚡` badge) —
-  live event log with filtering and a payload/state inspector.
-- Installed only when `NODE_ENV === 'development'`; production builds carry none of it.
+Why not a Web Worker? A worker still can't touch the DOM to render the panel, still
+pays a structured-clone cost to move events across the boundary (no cheaper than the
+JSON snapshot used here), and — critically — doesn't get you a genuinely separate
+process the way a second browsing context does; it's just another thread inside the
+same renderer, doesn't survive the app tab crashing, and adds message-passing latency
+for no isolation benefit this workload needs.
 
 (esp-js-polimer also ships its own `enableReduxDevTools` per model; this plugin is
 router-level and framework-agnostic by design, tracing *all* events across models.)

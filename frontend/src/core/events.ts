@@ -48,6 +48,7 @@ export const EventConst = {
 
   // gamification / progress
   progressLoaded: 'progressLoaded',
+  missionsLoaded: 'missionsLoaded',
 
   // instructor
   cohortsLoaded: 'cohortsLoaded',
