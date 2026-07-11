@@ -86,7 +86,7 @@ export function FxSalesView() {
         <button className="btn btn-accent w-full" disabled={fx.quoting} onClick={requestQuote}>
           {fx.quoting ? 'Pricing…' : 'Quote client'}
         </button>
-        {fx.quoteError && <div className="text-desk-down text-xs">{fx.quoteError}</div>}
+        {fx.quoteError && <div role="alert" className="text-desk-down text-xs">{fx.quoteError}</div>}
       </div>
 
       <div className="space-y-4 w-[420px]">
