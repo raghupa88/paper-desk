@@ -8,9 +8,13 @@ import com.paperdesk.domain.Enums.Role;
 import com.paperdesk.domain.EquitySnapshot;
 import com.paperdesk.domain.ScenarioSession;
 import com.paperdesk.domain.User;
+import com.paperdesk.gamification.Levels;
 import com.paperdesk.repo.*;
 import com.paperdesk.sim.SessionService;
 import com.paperdesk.trading.PortfolioService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
@@ -22,6 +26,10 @@ public class CohortController {
 
     public record CreateCohortRequest(String name, long scenarioId, Double startingBalance) {}
     public record JoinCohortRequest(String joinCode) {}
+
+    /** One ranked leaderboard row — the shared shape behind both the JSON and CSV endpoints. */
+    public record LeaderboardEntry(int rank, String displayName, double equity, double returnPct,
+                                   double maxDrawdownPct, double xp, int level, String levelName) {}
 
     private static final String CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private final SecureRandom random = new SecureRandom();
@@ -97,33 +105,80 @@ public class CohortController {
 
     @GetMapping("/{cohortId}/leaderboard")
     public List<Map<String, Object>> leaderboard(@PathVariable long cohortId) {
+        return computeLeaderboard(cohortId).stream().map(e -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("rank", e.rank());
+            m.put("displayName", e.displayName());
+            m.put("equity", e.equity());
+            m.put("returnPct", e.returnPct());
+            m.put("maxDrawdownPct", e.maxDrawdownPct());
+            m.put("xp", e.xp());
+            m.put("level", e.level());
+            m.put("levelName", e.levelName());
+            return m;
+        }).toList();
+    }
+
+    /**
+     * Gradebook export: the same ranking as the live leaderboard, as a CSV
+     * download. Fetched via a bearer-token'd request from the frontend
+     * (DataService.downloadLeaderboardCsv) rather than a plain link, since
+     * a browser navigation can't carry the Authorization header this
+     * endpoint needs — same authorization rule as the JSON leaderboard.
+     */
+    @GetMapping(value = "/{cohortId}/leaderboard.csv", produces = "text/csv;charset=UTF-8")
+    public ResponseEntity<String> leaderboardCsv(@PathVariable long cohortId) {
+        Cohort cohort = cohortRepo.findById(cohortId).orElseThrow();
+        List<LeaderboardEntry> rows = computeLeaderboard(cohortId);
+
+        StringBuilder csv = new StringBuilder("Rank,Student,Equity,Return %,Max Drawdown %,XP,Level,Level Name\n");
+        for (LeaderboardEntry e : rows) {
+            csv.append(e.rank()).append(',')
+               .append(csvField(e.displayName())).append(',')
+               .append(String.format(Locale.ROOT, "%.2f", e.equity())).append(',')
+               .append(String.format(Locale.ROOT, "%.2f", e.returnPct())).append(',')
+               .append(String.format(Locale.ROOT, "%.2f", e.maxDrawdownPct())).append(',')
+               .append(String.format(Locale.ROOT, "%.0f", e.xp())).append(',')
+               .append(e.level()).append(',')
+               .append(csvField(e.levelName())).append('\n');
+        }
+
+        String filename = cohort.name.replaceAll("[^a-zA-Z0-9-]+", "_") + "-leaderboard.csv";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(csv.toString());
+    }
+
+    private List<LeaderboardEntry> computeLeaderboard(long cohortId) {
         long userId = SecurityConfig.currentUserId();
         Cohort cohort = cohortRepo.findById(cohortId).orElseThrow();
         boolean allowed = cohort.instructorId.equals(userId)
                 || memberRepo.findByCohortIdAndUserId(cohortId, userId).isPresent();
         if (!allowed) throw new SecurityException("Not a member of this cohort");
 
-        List<Map<String, Object>> rows = new ArrayList<>();
+        record Scored(String displayName, double equity, double returnPct, double maxDrawdownPct,
+                      double xp, int level, String levelName) {}
+        List<Scored> scored = new ArrayList<>();
         for (CohortMember member : memberRepo.findByCohortId(cohortId)) {
             User user = userRepo.findById(member.userId).orElseThrow();
             Optional<Account> account = accountRepo.findByUserIdAndSessionId(member.userId, cohort.sessionId);
             if (account.isEmpty()) continue;
             double equity = portfolio.equity(account.get());
             double ret = (equity / account.get().startingBalance - 1) * 100;
-            var level = com.paperdesk.gamification.Levels.forXp(account.get().xp);
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("displayName", user.displayName);
-            m.put("equity", equity);
-            m.put("returnPct", ret);
-            m.put("maxDrawdownPct", maxDrawdownPct(account.get(), equity));
-            m.put("xp", account.get().xp);
-            m.put("level", level.number());
-            m.put("levelName", level.name());
-            rows.add(m);
+            Levels.Level level = Levels.forXp(account.get().xp);
+            scored.add(new Scored(user.displayName, equity, ret, maxDrawdownPct(account.get(), equity),
+                    account.get().xp, level.number(), level.name()));
         }
-        rows.sort((a, b) -> Double.compare((Double) b.get("equity"), (Double) a.get("equity")));
-        for (int i = 0; i < rows.size(); i++) rows.get(i).put("rank", i + 1);
-        return rows;
+        scored.sort((a, b) -> Double.compare(b.equity(), a.equity()));
+
+        List<LeaderboardEntry> out = new ArrayList<>();
+        for (int i = 0; i < scored.size(); i++) {
+            Scored s = scored.get(i);
+            out.add(new LeaderboardEntry(i + 1, s.displayName(), s.equity(), s.returnPct(),
+                    s.maxDrawdownPct(), s.xp(), s.level(), s.levelName()));
+        }
+        return out;
     }
 
     private double maxDrawdownPct(Account account, double currentEquity) {
@@ -149,6 +204,14 @@ public class CohortController {
         StringBuilder sb = new StringBuilder(6);
         for (int i = 0; i < 6; i++) sb.append(CODE_ALPHABET.charAt(random.nextInt(CODE_ALPHABET.length())));
         return sb.toString();
+    }
+
+    /** Quotes a CSV field only when it contains a comma, quote or newline, per RFC 4180. */
+    private String csvField(String s) {
+        if (s == null) return "";
+        boolean needsQuote = s.contains(",") || s.contains("\"") || s.contains("\n");
+        String escaped = s.replace("\"", "\"\"");
+        return needsQuote ? "\"" + escaped + "\"" : escaped;
     }
 
     private Map<String, Object> cohortJson(Cohort c) {
