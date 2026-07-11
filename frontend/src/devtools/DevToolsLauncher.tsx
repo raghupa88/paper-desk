@@ -10,6 +10,10 @@ import { activateAndOpenDevTools, isDevToolsEnabled } from './index';
  */
 export function DevToolsLauncher() {
   const router = useRouter();
+  // In dev builds the recorder auto-installs regardless of the persisted
+  // opt-in flag (see activation.ts) — reflect that here so the badge doesn't
+  // claim "(off)" while it's actually already recording.
+  const active = process.env.NODE_ENV === 'development' || isDevToolsEnabled();
   return (
     <button
       onClick={() => activateAndOpenDevTools(router)}
@@ -22,7 +26,7 @@ export function DevToolsLauncher() {
       onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
       onMouseLeave={e => (e.currentTarget.style.opacity = '0.55')}
     >
-      esp ⚡{isDevToolsEnabled() ? '' : ' (off)'}
+      esp ⚡{active ? '' : ' (off)'}
     </button>
   );
 }

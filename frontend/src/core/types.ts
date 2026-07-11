@@ -203,6 +203,12 @@ export interface Cohort {
   accountId?: number;
 }
 
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  milestoneDays: number | null;
+}
+
 export interface LeaderboardRow {
   rank: number;
   displayName: string;

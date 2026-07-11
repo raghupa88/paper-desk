@@ -5,7 +5,7 @@ import { StompService } from './StompService';
 import { EventConst, ModelIds } from './events';
 import {
   AccountInfo, ChainData, ClockState, Cohort, LeaderboardRow, MissionView, OrderView, PairLadder,
-  PortfolioView, ProgressView, Quote, RfqQuote, Scenario, SettlementView, UserInfo, Bar, EquityPoint,
+  PortfolioView, ProgressView, Quote, RfqQuote, Scenario, SettlementView, StreakInfo, UserInfo, Bar, EquityPoint,
 } from './types';
 
 /**
@@ -62,6 +62,24 @@ export class DataService {
     this.router.broadcastEvent(EventConst.scenariosLoaded, scenarios);
     this.router.broadcastEvent(EventConst.accountsLoaded, accounts);
     if (accounts.length > 0) this.selectAccount(accounts[0]);
+    void this.touchStreak();
+  }
+
+  /**
+   * Marks today as a used day for the real-calendar login streak (idempotent
+   * per day). On a milestone, reuses the exact same toast pipeline as fills/
+   * achievements/missions/margin-calls — one consistent notification style
+   * app-wide — even though this didn't arrive over the account WebSocket.
+   */
+  private async touchStreak(): Promise<void> {
+    const streak = await this.api.post<StreakInfo>('/api/streak/touch');
+    this.router.broadcastEvent(EventConst.streakLoaded, streak);
+    if (streak.milestoneDays != null) {
+      this.router.broadcastEvent(EventConst.accountEventReceived, {
+        type: 'STREAK_MILESTONE',
+        detail: `${streak.milestoneDays}-day streak! Come back tomorrow to keep it going.`,
+      });
+    }
   }
 
   async joinScenario(scenarioId: number): Promise<void> {

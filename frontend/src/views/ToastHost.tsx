@@ -6,6 +6,7 @@ import { useModelState } from './common';
 const LABELS: Record<string, { title: string; cls: string; icon: string }> = {
   ACHIEVEMENT: { title: 'Achievement unlocked!', cls: 'border-desk-warn text-desk-warn', icon: '🏆' },
   MISSION_COMPLETE: { title: 'Mission complete!', cls: 'border-desk-up text-desk-up', icon: '🎯' },
+  STREAK_MILESTONE: { title: 'Streak milestone!', cls: 'border-desk-warn text-desk-warn', icon: '🔥' },
   FILL: { title: 'Order filled', cls: 'border-desk-up text-desk-up', icon: '✓' },
   MARGIN_CALL: { title: 'Margin call', cls: 'border-desk-down text-desk-down', icon: '⚠' },
   SETTLEMENT: { title: 'Settlement', cls: 'border-desk-accent text-desk-accent', icon: '⚖' },

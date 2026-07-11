@@ -10,6 +10,7 @@ export const EventConst = {
   accountsLoaded: 'accountsLoaded',
   accountSelected: 'accountSelected',
   joinScenarioRequested: 'joinScenarioRequested',
+  streakLoaded: 'streakLoaded',
 
   // sim clock
   clockTick: 'clockTick',

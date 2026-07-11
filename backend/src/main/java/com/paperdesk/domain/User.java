@@ -3,6 +3,7 @@ package com.paperdesk.domain;
 import com.paperdesk.domain.Enums.Role;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "users")
@@ -18,4 +19,10 @@ public class User {
     public Role role;
     @Column(name = "created_at")
     public Instant createdAt = Instant.now();
+    @Column(name = "last_active_date")
+    public LocalDate lastActiveDate;
+    @Column(name = "current_streak")
+    public int currentStreak;
+    @Column(name = "longest_streak")
+    public int longestStreak;
 }

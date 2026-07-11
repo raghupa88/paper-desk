@@ -102,6 +102,12 @@ Learning is nudged with a lightweight progression system, consistent across the 
   instantly on any tab (pushed over the account WebSocket topic).
 - **Classroom tie-in**: the leaderboard shows each student's level alongside equity,
   return % and drawdown.
+- **Daily streak**: a real-calendar-day usage streak (🔥 in the header, next to the
+  level chip) — distinct from the sim-day "Hot Streak" trading badge above, this one
+  tracks whether *you* came back today, the habit-forming mechanic behind apps like
+  Duolingo. Touched once per app load (`POST /api/streak/touch`, idempotent same-day);
+  milestones at 3/7/14/30/60/100 days push a toast through the same notification
+  pipeline as fills and achievements, for one consistent feel.
 
 ## Guided missions
 
