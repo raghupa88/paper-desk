@@ -1,14 +1,15 @@
 import React from 'react';
 import { ModelIds } from '../core/events';
 import { TradingModel, TradingState } from '../models/TradingModel';
-import { useModelState, fmtMoney, fmtPct, pnlCls } from './common';
+import { useModelState, fmtMoney } from './common';
+import { Pnl } from './Pnl';
 import { EquityChart } from './ChartView';
 
-function Stat({ label, value, cls }: { label: string; value: string; cls?: string }) {
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="panel p-4 flex-1">
       <div className="text-xs uppercase tracking-wider text-desk-dim">{label}</div>
-      <div className={`text-xl font-semibold num mt-1 ${cls ?? ''}`}>{value}</div>
+      <div className="text-xl font-semibold num mt-1">{value}</div>
     </div>
   );
 }
@@ -23,8 +24,8 @@ export function DashboardView() {
         <Stat label="Portfolio value" value={fmtMoney(p?.equity, 0)} />
         <Stat label="Cash" value={fmtMoney(p?.cash, 0)} />
         <Stat label="Margin held" value={fmtMoney(p?.marginHeld, 0)} />
-        <Stat label="Today's P&L" value={fmtMoney(p?.dayPnl, 0)} cls={pnlCls(p?.dayPnl)} />
-        <Stat label="Total return" value={fmtPct(p?.totalReturnPct)} cls={pnlCls(p?.totalReturnPct)} />
+        <Stat label="Today's P&L" value={<Pnl value={p?.dayPnl} dp={0} />} />
+        <Stat label="Total return" value={<Pnl value={p?.totalReturnPct} kind="pct" />} />
       </div>
 
       <div className="flex gap-4 items-start">
@@ -44,7 +45,7 @@ export function DashboardView() {
                 <tr key={pos.positionId}>
                   <td>{pos.symbol}</td>
                   <td className="num text-right">{pos.qty}</td>
-                  <td className={`num text-right ${pnlCls(pos.unrealizedPnl)}`}>{fmtMoney(pos.unrealizedPnl)}</td>
+                  <td className="num text-right"><Pnl value={pos.unrealizedPnl} /></td>
                 </tr>
               ))}
               {(!p || p.positions.length === 0) &&

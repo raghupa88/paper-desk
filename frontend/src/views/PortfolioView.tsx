@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useServices } from '../AppContext';
 import { ModelIds } from '../core/events';
 import { TradingModel, TradingState } from '../models/TradingModel';
-import { useModelState, fmtMoney, fmtNum, pnlCls } from './common';
+import { useModelState, fmtMoney, fmtNum } from './common';
+import { Pnl } from './Pnl';
 
 export function PortfolioView() {
   const { dataService } = useServices();
@@ -40,8 +41,8 @@ export function PortfolioView() {
                 <td className="text-right">{fmtNum(pos.avgPrice, 4)}</td>
                 <td className="text-right">{fmtNum(pos.mark, 4)}</td>
                 <td className="text-right">{fmtMoney(pos.marketValue)}</td>
-                <td className={`text-right ${pnlCls(pos.unrealizedPnl)}`}>{fmtMoney(pos.unrealizedPnl)}</td>
-                <td className={`text-right ${pnlCls(pos.realizedPnl)}`}>{fmtMoney(pos.realizedPnl)}</td>
+                <td className="text-right"><Pnl value={pos.unrealizedPnl} /></td>
+                <td className="text-right"><Pnl value={pos.realizedPnl} /></td>
                 <td className="text-right">{pos.delta != null ? fmtNum(pos.delta, 2) : '—'}</td>
                 <td className="text-right">{pos.theta != null ? fmtMoney(pos.theta) : '—'}</td>
                 <td className="text-right">{pos.marginUsed != null ? fmtMoney(pos.marginUsed, 0) : '—'}</td>
@@ -64,7 +65,7 @@ export function PortfolioView() {
                 <td>{s.simDate}</td>
                 <td className={s.kind === 'MARGIN_CALL' || s.kind === 'LIQUIDATION' ? 'text-desk-down font-semibold' : 'text-desk-warn'}>{s.kind}</td>
                 <td>{s.symbol ?? '—'}</td>
-                <td className={`text-right ${pnlCls(s.cashFlow)}`}>{fmtMoney(s.cashFlow)}</td>
+                <td className="text-right"><Pnl value={s.cashFlow} /></td>
                 <td className="text-xs text-desk-dim">{s.detail}</td>
               </tr>
             ))}

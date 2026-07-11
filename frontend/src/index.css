@@ -20,12 +20,15 @@ body {
 
 .input {
   @apply bg-desk-bg border border-desk-border rounded px-2 py-1.5 text-sm text-desk-text
-         focus:outline-none focus:border-desk-accent w-full;
+         focus:outline-none focus:border-desk-accent focus-visible:ring-2 focus-visible:ring-desk-accent
+         focus-visible:ring-offset-2 focus-visible:ring-offset-desk-bg w-full;
 }
 
 .btn {
   @apply px-3 py-1.5 rounded text-sm font-semibold border border-desk-border
-         hover:border-desk-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+         hover:border-desk-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-desk-accent
+         focus-visible:ring-offset-2 focus-visible:ring-offset-desk-bg;
 }
 
 .btn-buy {

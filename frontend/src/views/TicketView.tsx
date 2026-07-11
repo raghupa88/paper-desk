@@ -59,9 +59,9 @@ export function TicketView() {
         <div className="font-semibold">{instr.symbol}</div>
         <div className="text-xs text-desk-dim">{instr.name}</div>
         <div className="num text-sm mt-1">
-          <span className="text-desk-down">{fmtNum(instr.bid)}</span>
+          <span className="text-desk-down"><span className="text-[10px] text-desk-dim align-top">bid</span> {fmtNum(instr.bid)}</span>
           <span className="text-desk-dim mx-1">/</span>
-          <span className="text-desk-up">{fmtNum(instr.ask)}</span>
+          <span className="text-desk-up"><span className="text-[10px] text-desk-dim align-top">ask</span> {fmtNum(instr.ask)}</span>
           {instr.greeks && (
             <span className="text-xs text-desk-dim ml-2">Δ {instr.greeks.delta.toFixed(3)}</span>
           )}
@@ -76,16 +76,16 @@ export function TicketView() {
       </div>
 
       <div className="flex gap-2">
-        <select className="input" value={ticket.orderType}
+        <select className="input" aria-label="Order type" value={ticket.orderType}
                 onChange={e => change({ orderType: e.target.value as any })}>
           <option value="MARKET">Market</option>
           <option value="LIMIT">Limit</option>
         </select>
-        <input className="input" type="number" min={0} step="any" value={ticket.qty}
+        <input className="input" aria-label="Quantity" type="number" min={0} step="any" value={ticket.qty}
                onChange={e => change({ qty: Number(e.target.value) })} />
       </div>
       {ticket.orderType === 'LIMIT' && (
-        <input className="input" type="number" step="any" placeholder="Limit price"
+        <input className="input" aria-label="Limit price" type="number" step="any" placeholder="Limit price"
                value={ticket.limitPrice ?? ''}
                onChange={e => change({ limitPrice: e.target.value === '' ? null : Number(e.target.value) })} />
       )}
@@ -127,8 +127,8 @@ export function TicketView() {
       </button>
 
       {ticket.lastResult && (
-        <div className={`text-xs ${ticket.lastResult.ok ? 'text-desk-up' : 'text-desk-down'}`}>
-          {ticket.lastResult.message}
+        <div role="status" className={`text-xs ${ticket.lastResult.ok ? 'text-desk-up' : 'text-desk-down'}`}>
+          {ticket.lastResult.ok ? '✓' : '✕'} {ticket.lastResult.message}
         </div>
       )}
     </div>

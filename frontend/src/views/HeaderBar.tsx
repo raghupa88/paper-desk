@@ -5,7 +5,8 @@ import { ClockModel } from '../models/ClockModel';
 import { SessionModel } from '../models/SessionModel';
 import { TradingModel } from '../models/TradingModel';
 import { ProgressModel } from '../models/ProgressModel';
-import { useModelState, fmtSimTime, fmtMoney, fmtPct, pnlCls } from './common';
+import { useModelState, fmtSimTime, fmtMoney } from './common';
+import { Pnl } from './Pnl';
 
 export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
   const { dataService, authStore } = useServices();
@@ -26,7 +27,7 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
         simulated
       </span>
 
-      <select className="input !w-auto" value={acct?.accountId ?? ''}
+      <select className="input !w-auto" aria-label="Active trading account" value={acct?.accountId ?? ''}
               onChange={e => {
                 const a = session.accounts.find(x => x.accountId === Number(e.target.value));
                 if (a) dataService.selectAccount(a);
@@ -52,7 +53,7 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
         </button>
         <button className="btn text-xs" title="Advance one sim day instantly (runs settlement & expiries)"
                 onClick={() => void dataService.clockControl('STEP_DAY')}>⏭ +1 day</button>
-        <select className="input !w-auto text-xs" value={clock?.acceleration ?? 300}
+        <select className="input !w-auto text-xs" aria-label="Sim clock speed" value={clock?.acceleration ?? 300}
                 onChange={e => void dataService.clockControl('SET_ACCELERATION', Number(e.target.value))}>
           <option value={60}>60×</option>
           <option value={300}>300×</option>
@@ -80,8 +81,8 @@ export function HeaderBar({ onAddScenario }: { onAddScenario: () => void }) {
         {portfolio && (
           <>
             <span>Equity <strong>{fmtMoney(portfolio.equity, 0)}</strong></span>
-            <span className={pnlCls(portfolio.dayPnl)}>Day {fmtMoney(portfolio.dayPnl, 0)}</span>
-            <span className={pnlCls(portfolio.totalReturnPct)}>{fmtPct(portfolio.totalReturnPct)}</span>
+            <span>Day <Pnl value={portfolio.dayPnl} dp={0} /></span>
+            <Pnl value={portfolio.totalReturnPct} kind="pct" />
           </>
         )}
         <span className="text-desk-dim">{authStore.user?.displayName}</span>

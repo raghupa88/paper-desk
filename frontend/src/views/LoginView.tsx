@@ -43,19 +43,23 @@ export function LoginView() {
         </div>
         {mode === 'signup' && (
           <>
-            <input className="input" placeholder="Display name" value={displayName}
+            <label htmlFor="displayName" className="sr-only">Display name</label>
+            <input id="displayName" className="input" placeholder="Display name" value={displayName}
                    onChange={e => setDisplayName(e.target.value)} required />
-            <select className="input" value={role} onChange={e => setRole(e.target.value as any)}>
+            <label htmlFor="role" className="sr-only">I am a</label>
+            <select id="role" className="input" value={role} onChange={e => setRole(e.target.value as any)}>
               <option value="STUDENT">I'm a student</option>
               <option value="INSTRUCTOR">I'm an instructor</option>
             </select>
           </>
         )}
-        <input className="input" type="email" placeholder="Email" value={email}
+        <label htmlFor="email" className="sr-only">Email</label>
+        <input id="email" className="input" type="email" placeholder="Email" value={email}
                onChange={e => setEmail(e.target.value)} required />
-        <input className="input" type="password" placeholder="Password (min 6 chars)" value={password}
+        <label htmlFor="password" className="sr-only">Password</label>
+        <input id="password" className="input" type="password" placeholder="Password (min 6 chars)" value={password}
                onChange={e => setPassword(e.target.value)} required minLength={6} />
-        {error && <div className="text-desk-down text-sm">{error}</div>}
+        {error && <div className="text-desk-down text-sm" role="alert">{error}</div>}
         <button className="btn btn-accent w-full" disabled={busy}>
           {busy ? 'Working…' : mode === 'login' ? 'Log in' : 'Create account'}
         </button>

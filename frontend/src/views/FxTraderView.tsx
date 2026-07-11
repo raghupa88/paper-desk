@@ -4,7 +4,8 @@ import { useServices } from '../AppContext';
 import { EventConst, ModelIds } from '../core/events';
 import { FxModel, FxState } from '../models/FxModel';
 import { TradingModel, TradingState } from '../models/TradingModel';
-import { useModelState, fmtMoney, fmtNum, pnlCls } from './common';
+import { useModelState, fmtMoney, fmtNum } from './common';
+import { Pnl } from './Pnl';
 import { TicketView } from './TicketView';
 
 /**
@@ -73,7 +74,7 @@ export function FxTraderView() {
                   <td className="text-right">{p.gamma != null ? fmtNum(p.gamma, 2) : '—'}</td>
                   <td className="text-right">{p.theta != null ? fmtMoney(p.theta) : '—'}</td>
                   <td className="text-right">{p.vega != null ? fmtNum(p.vega, 2) : '—'}</td>
-                  <td className={`text-right ${pnlCls(p.unrealizedPnl)}`}>{fmtMoney(p.unrealizedPnl)}</td>
+                  <td className="text-right"><Pnl value={p.unrealizedPnl} /></td>
                 </tr>
               ))}
               {fxPositions.length === 0 &&
@@ -94,7 +95,7 @@ export function FxTraderView() {
                   <tr key={r.shiftPct} className={r.shiftPct === 0 ? 'bg-desk-bg' : ''}>
                     <td className="text-right">{r.shiftPct > 0 ? '+' : ''}{r.shiftPct.toFixed(0)}%</td>
                     <td className="text-right">{fmtNum(r.spot)}</td>
-                    <td className={`text-right ${pnlCls(r.pnl)}`}>{fmtMoney(r.pnl)}</td>
+                    <td className="text-right"><Pnl value={r.pnl} /></td>
                     <td className="text-right">{fmtNum(r.delta, 0)}</td>
                     <td className="text-right">{fmtNum(r.gamma, 2)}</td>
                     <td className="text-right">{fmtNum(r.vega, 2)}</td>
