@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ExecutorSubscribableChannel;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.mock.env.MockEnvironment;
 
 import java.util.Optional;
 
@@ -27,7 +28,8 @@ import static org.mockito.Mockito.when;
  */
 class StompAuthChannelInterceptorTest {
 
-    private final JwtService jwt = new JwtService("test-only-secret-at-least-32-bytes-long-for-hmac", 1);
+    private final JwtService jwt = new JwtService(
+            "test-only-secret-at-least-32-bytes-long-for-hmac", 1, new MockEnvironment());
     private AccountRepo accountRepo;
     private StompAuthChannelInterceptor interceptor;
     private final ExecutorSubscribableChannel channel = new ExecutorSubscribableChannel();
