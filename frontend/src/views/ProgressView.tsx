@@ -10,7 +10,10 @@ export function ProgressView() {
   const state = useModelState<ProgressModel, ProgressState>(ModelIds.progress, m => m.state);
   const p = state.progress;
 
-  useEffect(() => { void dataService.refreshProgress(); }, [dataService]);
+  useEffect(() => {
+    void dataService.refreshProgress();
+    void dataService.refreshMissions();
+  }, [dataService]);
 
   if (!p) return <div className="text-desk-dim">Loading progress…</div>;
 
@@ -19,6 +22,7 @@ export function ProgressView() {
     ? Math.min(100, Math.max(0, ((p.xp - p.levelFloorXp) / span) * 100)) : 100;
   const earned = p.badges.filter(b => b.earned);
   const locked = p.badges.filter(b => !b.earned);
+  const missionsDone = state.missions.filter(m => m.completed).length;
 
   return (
     <div className="space-y-4 max-w-5xl">
@@ -39,6 +43,34 @@ export function ProgressView() {
         <div className="text-center">
           <div className="text-2xl font-bold num">{p.earnedCount}<span className="text-desk-dim">/{p.badges.length}</span></div>
           <div className="text-xs uppercase tracking-wider text-desk-dim">badges</div>
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-title">
+          Missions — guided exercises
+          <span className="ml-3 normal-case text-desk-text">{missionsDone}/{state.missions.length} complete</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 p-4">
+          {state.missions.map(m => (
+            <div key={m.code}
+                 className={`border rounded-lg p-3 ${m.completed ? 'border-desk-up' : 'border-desk-border'}
+                             ${state.recentUnlocks.includes(m.code) ? 'shadow-[0_0_12px_rgba(63,185,80,.4)]' : ''}`}>
+              <div className={`font-semibold flex items-center justify-between ${m.completed ? 'text-desk-up' : ''}`}>
+                <span>{m.completed ? '✅' : '🎯'} {m.title}</span>
+                <span className="text-xs text-desk-dim num">+{m.xp} XP</span>
+              </div>
+              <div className="text-xs text-desk-dim mt-1">{m.description}</div>
+              <ul className="mt-2 space-y-1">
+                {m.steps.map((s, i) => (
+                  <li key={i} className={`text-xs flex items-center gap-2 ${s.done ? 'text-desk-text' : 'text-desk-dim'}`}>
+                    <span>{s.done ? '☑' : '☐'}</span>{s.description}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          {state.missions.length === 0 && <div className="text-desk-dim text-sm col-span-2">Loading missions…</div>}
         </div>
       </div>
 

@@ -103,6 +103,20 @@ Learning is nudged with a lightweight progression system, consistent across the 
 - **Classroom tie-in**: the leaderboard shows each student's level alongside equity,
   return % and drawdown.
 
+## Guided missions
+
+Beyond single-action badges, seven **missions** string together several trades into a
+strategy exercise, evaluated live from the account's actual orders/positions/settlements
+(no separate progress bookkeeping to drift out of sync):
+
+First Steps · Covered Call Writer · Protective Put · Long Straddle · Futures Settlement
+Lab · FX Desk Rotation · Swap Lab.
+
+Each mission has 2 checklist steps shown in the Progress tab; completing all of them
+persists a one-time completion, awards XP, and pushes a `MISSION_COMPLETE` toast —
+evaluated right after every fill and every day-roll (`MissionEvaluationService`,
+`GET /api/missions/{accountId}`).
+
 ## CI
 
 GitHub Actions (`ci/github-actions-ci.yml` — move to `.github/workflows/ci.yml` to activate; see `ci/README.md`) runs on pushes and PRs: backend
