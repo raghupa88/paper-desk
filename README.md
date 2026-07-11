@@ -105,7 +105,7 @@ Learning is nudged with a lightweight progression system, consistent across the 
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and PRs: backend
+GitHub Actions (`ci/github-actions-ci.yml` — move to `.github/workflows/ci.yml` to activate; see `ci/README.md`) runs on pushes and PRs: backend
 `mvn test` (Temurin 21) and frontend `npm ci && typecheck && test && build` (Node 22).
 
 ## esp-js DevTools (dev mode)
