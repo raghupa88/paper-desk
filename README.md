@@ -197,6 +197,23 @@ SPRING_DATASOURCE_PASSWORD=paperdesk \
 mvn spring-boot:run
 ```
 
+## Accessibility
+
+- **P&L is never color-only**: every gain/loss/return value (dashboard, portfolio,
+  FX book, risk ladder, blotter fill result, classroom leaderboard) renders a
+  ▲/▼/– glyph alongside the red/green, via a single shared `<Pnl>` component
+  (`frontend/src/views/Pnl.tsx`) — a colorblind student can read direction from
+  shape and sign, not just hue (WCAG 1.4.1). The order ticket's bid/ask quote,
+  previously distinguished by color alone, now carries "bid"/"ask" text labels too.
+- **Forms have real accessible names**, not placeholder-only labels: sign-up/login,
+  the cohort create/join forms, and the order ticket's compact fields all resolve a
+  proper name via `<label>`/`aria-label`, verified against the actual accessibility
+  tree (a screen reader announces "Email", not silence).
+- **Errors and fill results are live regions** (`role="alert"`/`role="status"`) so
+  they're announced without the user needing to notice or navigate to them.
+- **Focus is always visible**: `.input`/`.btn` use a `focus-visible` ring instead of
+  suppressing the outline with only a subtle border-color change.
+
 ## Teaching simplifications (by design)
 
 - Continuous 24/7 market (no weekends/holidays), one flat rate curve, implied vol =
