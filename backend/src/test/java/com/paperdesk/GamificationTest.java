@@ -7,6 +7,7 @@ import com.paperdesk.domain.User;
 import com.paperdesk.gamification.Badge;
 import com.paperdesk.gamification.GamificationService;
 import com.paperdesk.gamification.Levels;
+import com.paperdesk.gamification.Mission;
 import com.paperdesk.repo.*;
 import com.paperdesk.sim.SessionService;
 import com.paperdesk.sim.SimEngine;
@@ -35,6 +36,7 @@ class GamificationTest {
     @Autowired AccountRepo accountRepo;
     @Autowired InstrumentRepo instrumentRepo;
     @Autowired AchievementRepo achievementRepo;
+    @Autowired MissionCompletionRepo missionRepo;
     @Autowired UserRepo userRepo;
 
     long userId;
@@ -64,8 +66,11 @@ class GamificationTest {
         List<String> codes = achievementRepo.findByAccountId(acct.id).stream().map(a -> a.code).toList();
         assertTrue(codes.contains(Badge.FIRST_TRADE.name()));
         assertTrue(codes.contains(Badge.STOCK_PICKER.name()));
-        assertEquals(GamificationService.XP_PER_FILL + Badge.FIRST_TRADE.xp + Badge.STOCK_PICKER.xp,
-                after.xp, 1e-9, "fill xp + both badges");
+        // A single trade also satisfies both FIRST_STEPS mission steps (a fill, and an open
+        // position), so it completes in the same transaction as these two badges.
+        assertTrue(missionRepo.existsByAccountIdAndCode(acct.id, Mission.FIRST_STEPS.name()));
+        assertEquals(GamificationService.XP_PER_FILL + Badge.FIRST_TRADE.xp + Badge.STOCK_PICKER.xp + Mission.FIRST_STEPS.xp,
+                after.xp, 1e-9, "fill xp + both badges + the First Steps mission");
 
         // second equity trade: only fill xp, badges are one-time
         orders.place(acct.id, acme.id, OrderSide.SELL, OrderType.MARKET, 5, null, null);

@@ -7,6 +7,13 @@ import { EventConst } from './events';
  *   /topic/clock/{sessionId}   -> clockTick (broadcast)
  *   /topic/prices/{sessionId}  -> pricesTick (broadcast)
  *   /topic/account/{accountId} -> accountEventReceived (broadcast)
+ *
+ * The JWT travels as a STOMP CONNECT header (connectHeaders), not an HTTP
+ * header — a browser WebSocket handshake can't carry custom headers, so the
+ * backend's StompAuthChannelInterceptor authenticates at the STOMP frame
+ * layer instead and authorizes each SUBSCRIBE against topic ownership. No
+ * token, no connection: the client only activates once a token is set, and
+ * fully deactivates on logout rather than retrying forever unauthenticated.
  */
 export class StompService {
   private client: Client | null = null;
@@ -18,6 +25,7 @@ export class StompService {
 
   constructor(private router: Router) {}
 
+  /** Builds the client (inactive) so setToken() can activate it once a JWT exists. */
   start() {
     if (this.client) return;
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -26,12 +34,23 @@ export class StompService {
       reconnectDelay: 3000,
     });
     this.client.onConnect = () => this.resubscribe();
-    this.client.activate();
+  }
+
+  /** Call on login/signup/session-restore and on logout (with null) to keep the socket's auth in sync. */
+  setToken(token: string | null) {
+    if (!this.client) return;
+    this.client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+    if (token) {
+      if (!this.client.active) this.client.activate();
+    } else if (this.client.active) {
+      this.clearSubs();
+      void this.client.deactivate();
+    }
   }
 
   stop() {
     this.clearSubs();
-    this.client?.deactivate();
+    void this.client?.deactivate();
     this.client = null;
   }
 

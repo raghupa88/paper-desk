@@ -62,6 +62,7 @@ export function bootstrap(): AppServices {
 
   stomp.start();
   if (authStore.token) {
+    dataService.resumeSession(); // authenticates the STOMP connection with the existing token
     dataService.bootstrap().catch(() => dataService.logout());
   }
 

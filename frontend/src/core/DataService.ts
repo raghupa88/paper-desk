@@ -35,6 +35,7 @@ export class DataService {
     const res = await this.api.post<{ token: string; user: UserInfo }>('/api/auth/signup',
       { email, password, displayName, role });
     this.auth.save(res.token, res.user);
+    this.stomp.setToken(res.token);
     this.router.broadcastEvent(EventConst.loggedIn, res.user);
     await this.bootstrap();
   }
@@ -42,13 +43,20 @@ export class DataService {
   async login(email: string, password: string): Promise<void> {
     const res = await this.api.post<{ token: string; user: UserInfo }>('/api/auth/login', { email, password });
     this.auth.save(res.token, res.user);
+    this.stomp.setToken(res.token);
     this.router.broadcastEvent(EventConst.loggedIn, res.user);
     await this.bootstrap();
+  }
+
+  /** Call once at app startup if a token already exists (session restore on reload). */
+  resumeSession(): void {
+    this.stomp.setToken(this.auth.token);
   }
 
   logout() {
     this.stopPolling();
     this.stomp.setContext(null, null);
+    this.stomp.setToken(null);
     this.auth.clear();
     this.router.broadcastEvent(EventConst.loggedOut, {});
   }
