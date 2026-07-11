@@ -1,0 +1,32 @@
+# Production overrides, activated via SPRING_PROFILES_ACTIVE=prod (the
+# backend/Dockerfile's default). Real Oracle datasource, tightened WebSocket
+# origin, and a JWT secret that must come from the environment — JwtService
+# fails startup loudly if it's missing or still the dev placeholder.
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:5}
+      minimum-idle: ${DB_POOL_MIN:1}
+      connection-timeout: 10000
+      max-lifetime: 1500000
+
+paperdesk:
+  jwt:
+    secret: ${PAPERDESK_JWT_SECRET}
+  cors:
+    allowed-origin: ${PAPERDESK_ALLOWED_ORIGIN}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

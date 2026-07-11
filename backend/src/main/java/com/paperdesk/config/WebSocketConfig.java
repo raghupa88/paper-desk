@@ -1,5 +1,6 @@
 package com.paperdesk.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -19,6 +20,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompAuthChannelInterceptor authInterceptor;
 
+    @Value("${paperdesk.cors.allowed-origin:*}")
+    private String allowedOrigin;
+
     public WebSocketConfig(StompAuthChannelInterceptor authInterceptor) {
         this.authInterceptor = authInterceptor;
     }
@@ -31,7 +35,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
+        registry.addEndpoint("/ws").setAllowedOriginPatterns(allowedOrigin);
     }
 
     @Override
