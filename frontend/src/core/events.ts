@@ -31,6 +31,7 @@ export const EventConst = {
   portfolioLoaded: 'portfolioLoaded',
   blotterLoaded: 'blotterLoaded',
   settlementsLoaded: 'settlementsLoaded',
+  scorecardLoaded: 'scorecardLoaded',
   accountEventReceived: 'accountEventReceived',
 
   // options chain

@@ -1,6 +1,7 @@
 package com.paperdesk.trading;
 
 import com.paperdesk.domain.Account;
+import com.paperdesk.domain.ClosedTrade;
 import com.paperdesk.domain.Enums.*;
 import com.paperdesk.domain.Fill;
 import com.paperdesk.domain.Instrument;
@@ -9,6 +10,7 @@ import com.paperdesk.domain.TradeOrder;
 import com.paperdesk.gamification.GamificationService;
 import com.paperdesk.gamification.MissionEvaluationService;
 import com.paperdesk.repo.AccountRepo;
+import com.paperdesk.repo.ClosedTradeRepo;
 import com.paperdesk.repo.FillRepo;
 import com.paperdesk.repo.OrderRepo;
 import com.paperdesk.repo.PositionRepo;
@@ -20,6 +22,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +40,7 @@ public class OrderService {
     private final FillRepo fillRepo;
     private final AccountRepo accountRepo;
     private final PositionRepo positionRepo;
+    private final ClosedTradeRepo closedTradeRepo;
     private final MarketDataService market;
     private final SimEngine engine;
     private final SimpMessagingTemplate ws;
@@ -44,13 +48,15 @@ public class OrderService {
     private final MissionEvaluationService missions;
 
     public OrderService(OrderRepo orderRepo, FillRepo fillRepo, AccountRepo accountRepo,
-                        PositionRepo positionRepo, MarketDataService market, SimEngine engine,
+                        PositionRepo positionRepo, ClosedTradeRepo closedTradeRepo,
+                        MarketDataService market, SimEngine engine,
                         SimpMessagingTemplate ws, GamificationService gamification,
                         MissionEvaluationService missions) {
         this.orderRepo = orderRepo;
         this.fillRepo = fillRepo;
         this.accountRepo = accountRepo;
         this.positionRepo = positionRepo;
+        this.closedTradeRepo = closedTradeRepo;
         this.market = market;
         this.engine = engine;
         this.ws = ws;
@@ -211,7 +217,6 @@ public class OrderService {
                     Position p = new Position();
                     p.accountId = account.id;
                     p.instrumentId = instr.id;
-                    p.openedSimTime = engine.runtime(instr.sessionId).simTime;
                     return p;
                 });
 
@@ -224,6 +229,11 @@ public class OrderService {
         double oldQty = pos.qty;
         double newQty = oldQty + signedQty;
         double basis = margined && pos.lastSettlePrice != null ? pos.lastSettlePrice : pos.avgPrice;
+        Instant simTime = engine.runtime(instr.sessionId).simTime;
+
+        // A flat position (brand new row, or a row that was fully closed earlier) starts a
+        // fresh holding period here, whichever fill opens it.
+        if (oldQty == 0) pos.openedSimTime = simTime;
 
         if (oldQty == 0 || Math.signum(oldQty) == Math.signum(signedQty)) {
             pos.avgPrice = (pos.avgPrice * Math.abs(oldQty) + price * Math.abs(signedQty)) / Math.abs(newQty);
@@ -232,8 +242,19 @@ public class OrderService {
             double realized = (price - basis) * closed * Math.signum(oldQty) * instr.contractSize;
             pos.realizedPnl += realized;
             if (!cashInstrument) account.cashBalance += realized; // cash instruments realize via proceeds
+
+            ClosedTrade trade = new ClosedTrade();
+            trade.accountId = account.id;
+            trade.instrumentId = instr.id;
+            trade.openedSimTime = pos.openedSimTime;
+            trade.closedSimTime = simTime;
+            trade.qty = closed;
+            trade.realizedPnl = realized;
+            closedTradeRepo.save(trade);
+
             if (Math.abs(signedQty) > Math.abs(oldQty)) {
                 pos.avgPrice = price; // flipped through zero: remainder opens at the fill price
+                pos.openedSimTime = simTime;
                 if (margined) pos.lastSettlePrice = null;
             }
         }

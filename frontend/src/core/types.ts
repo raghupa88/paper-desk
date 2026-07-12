@@ -157,6 +157,18 @@ export interface EquityPoint {
   equity: number;
 }
 
+export interface ScorecardView {
+  totalTrades: number;
+  wins: number;
+  losses: number;
+  winRatePct: number;
+  avgWin: number;
+  avgLoss: number;
+  avgHoldingPeriodHours: number;
+  maxDrawdown: number;
+  maxDrawdownPct: number;
+}
+
 export interface RfqQuote {
   pair: string;
   spot: number;

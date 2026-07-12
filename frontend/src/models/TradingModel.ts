@@ -1,7 +1,7 @@
 import { Router, observeEvent } from 'esp-js';
 import { ImmutableModel } from 'esp-js-polimer';
 import { EventConst, ModelIds } from '../core/events';
-import { EquityPoint, OrderView, PortfolioView, Quote, SettlementView } from '../core/types';
+import { EquityPoint, OrderView, PortfolioView, Quote, ScorecardView, SettlementView } from '../core/types';
 
 export interface TicketState {
   instrument: Quote | null;
@@ -26,6 +26,7 @@ export interface TradingState {
   equityHistory: EquityPoint[];
   blotter: OrderView[];
   settlements: SettlementView[];
+  scorecard: ScorecardView | null;
   notifications: Notification[];
 }
 
@@ -96,6 +97,11 @@ class TradingStateHandlers {
     draft.settlements = settlements;
   }
 
+  @observeEvent(EventConst.scorecardLoaded)
+  onScorecard(draft: TradingState, scorecard: ScorecardView) {
+    draft.scorecard = scorecard;
+  }
+
   @observeEvent(EventConst.accountEventReceived)
   onAccountEvent(draft: TradingState, ev: { type: string; detail: unknown }) {
     draft.notifications.unshift({ at: Date.now(), type: ev.type, detail: String(ev.detail) });
@@ -109,6 +115,7 @@ class TradingStateHandlers {
     draft.equityHistory = [];
     draft.blotter = [];
     draft.settlements = [];
+    draft.scorecard = null;
     draft.notifications = [];
   }
 }
@@ -119,7 +126,7 @@ export function registerTradingModel(router: Router) {
       modelId: ModelIds.trading,
       state: {
         ticket: emptyTicket(), portfolio: null, equityHistory: [],
-        blotter: [], settlements: [], notifications: [],
+        blotter: [], settlements: [], scorecard: null, notifications: [],
       },
     })
     .withStateHandlers('state', new TradingStateHandlers())

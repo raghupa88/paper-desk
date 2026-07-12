@@ -57,4 +57,14 @@ export const GLOSSARY = {
     description: 'In this swap, buying means you pay the fixed rate and receive the floating (index) '
       + 'rate each period — the classic ‘pay fixed’ position, a bet that rates will rise.',
   },
+  winRate: {
+    title: 'Win rate',
+    description: 'The share of your closed trades that made money. A closing or flipping fill counts '
+      + 'as one trade — a losing trade with a small loss can still beat a rare, unusually large win.',
+  },
+  maxDrawdown: {
+    title: 'Max drawdown',
+    description: 'The largest drop in your account equity from a prior peak to a later low, measured '
+      + 'across your daily equity history. A common risk gauge alongside total return.',
+  },
 } as const;
