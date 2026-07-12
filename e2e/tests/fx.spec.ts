@@ -33,6 +33,28 @@ test.describe('FX', () => {
     expect(await ladderRows.count()).toBeGreaterThanOrEqual(5);
   });
 
+  test('FX Trader: buying an FX option from the dealer-mid chain loads Greeks and fills tagged TRADER', async ({ page }) => {
+    await signUpAndJoin(page);
+    await goToTab(page, 'FX Trader');
+
+    const chainPanel = page.locator('.panel', { hasText: 'FX options chain' });
+    await expect(chainPanel).toBeVisible({ timeout: 10_000 });
+    const rows = chainPanel.locator('table.tbl tbody tr');
+    await expect(rows.first()).toBeVisible({ timeout: 10_000 });
+
+    // Click a call premium cell (5th column: Delta, Gamma, Theta, Vega, Premium).
+    await rows.nth(2).locator('td').nth(4).click();
+
+    await expect(page.locator('.panel-title', { hasText: 'Order ticket' })).toBeVisible();
+    await expect(page.locator('text=(trader view)')).toBeVisible();
+    await placeOrder(page, { side: 'BUY', qty: 1 });
+
+    await goToTab(page, 'Blotter');
+    const firstRow = page.locator('table.tbl tbody tr').first();
+    await expect(firstRow).toContainText('FILLED');
+    await expect(firstRow).toContainText('TRADER');
+  });
+
   test('FX Sales: quoting and executing an RFQ books a deal with the sales all-in price', async ({ page }) => {
     await signUpAndJoin(page);
     await goToTab(page, 'FX Sales');

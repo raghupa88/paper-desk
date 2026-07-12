@@ -43,6 +43,7 @@ cd backend && mvn test        # pricing (Black-Scholes/GK vs textbook values, pu
                               # parity), GBM determinism, fills, margin, expiry, fixings
 cd frontend && npm test       # polimer model reducers + esp devtools tracer
 cd frontend && npm run typecheck && npm run build
+cd e2e && npm ci && npx playwright test   # full-stack Playwright suite — see below
 ```
 
 ## How the simulation works
@@ -77,8 +78,10 @@ cd frontend && npm run typecheck && npm run build
   click a premium to load the ticket.
 - **FX Sales** — client RFQ for custom-strike/expiry FX options: dealer mid + sales
   margin = all-in client price; executing books the deal (`view_context=SALES`).
-- **FX Trader** — dealer mids, the FX book with aggregated Greeks, and a spot risk
-  ladder (P&L/Δ/Γ/vega across ±3% spot shifts).
+- **FX Trader** — dealer mids, a dealer-mid FX options chain (strikes × expiries,
+  click a premium to trade, same shared chain state as the Options Chain tab), the
+  FX book with aggregated Greeks, and a spot risk ladder (P&L/Δ/Γ/vega across ±3%
+  spot shifts).
 - **Portfolio** — live marks, unrealized/realized P&L, per-position Greeks, margin
   usage, settlement/lifecycle history.
 - **Blotter** — every order with fills, statuses, reject reasons, sales/trader tags.
@@ -128,9 +131,19 @@ evaluated right after every fill and every day-roll (`MissionEvaluationService`,
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main`/`claude/**`
-and every PR into `main`: backend `mvn test` (Temurin 21), frontend
-`npm ci && typecheck && test && build` (Node 22), and an E2E job that runs after
-both — see below.
+and every PR into `main`: backend `mvn test` (Temurin 21) and frontend
+`npm ci && typecheck && test && build` (Node 22). A third job for the `e2e/`
+Playwright suite (see below) is written but not yet wired in — the push
+credentials in this environment lack the `workflow` OAuth scope needed to
+modify `.github/workflows/*` directly, so that one addition needs a manual
+commit via the GitHub web UI.
+
+`.github/dependabot.yml` opens a weekly PR per outdated Maven/npm/GitHub
+Actions dependency. Not every bump is safe to auto-merge — the esp-js
+ecosystem (`esp-js-react`, `esp-js-polimer`) hard-pins React 18 and rxjs 6
+as real (non-peer) dependencies internally, so major-version Dependabot PRs
+for `react`, `rxjs`, `lightweight-charts`, `typescript`, or the Spring Boot
+parent need a real compatibility check before merging, not a rubber stamp.
 
 ## End-to-end tests
 
@@ -331,6 +344,28 @@ running server — unauthenticated CONNECT rejected, valid CONNECT accepted, SUB
 to another account's topic rejected, and a genuine trade's fill message delivered
 end-to-end to the owning account's own subscription.
 
+## Deployment (Cloudflare, in progress)
+
+- `backend/Dockerfile` + `backend/src/main/resources/application-prod.yml`:
+  shipped and verified — multi-stage build, `/actuator/health`, real
+  datasource/JWT-secret/CORS-origin from env vars only, a fail-fast guard
+  that refuses to start under the `prod` profile with a missing/weak/still-
+  dev-default JWT secret.
+- `wrangler.toml` + `worker/`: a routing Worker (static assets for
+  everything except `/api/**`, `/ws`, `/actuator/health`, which proxy to a
+  Cloudflare Container running the backend image) — **explicitly
+  unverified**, written from documentation research pending a real
+  Cloudflare account to validate against (Cloudflare Containers is new
+  enough that the container-binding syntax and the WebSocket-proxying
+  behavior need hands-on confirmation).
+- `docs/cd-setup-runbook.md`: the one-time account-provisioning steps
+  (Cloudflare Workers/Containers + Oracle Autonomous Database, since the
+  Flyway migrations are Oracle-dialect) and the exact secrets list needed
+  before the pipeline can actually deploy anywhere.
+- `.github/workflows/cd.yml` doesn't exist yet — the last step, wiring the
+  above into an automated deploy-on-push pipeline, is blocked on the
+  Cloudflare/Oracle accounts existing first.
+
 ## Repository layout
 
 ```
@@ -339,4 +374,7 @@ backend/   Spring Boot app — sim engine (com.paperdesk.sim), pricing library
            (com.paperdesk.trading), REST + WS (com.paperdesk.web/config)
 frontend/  webpack + React + esp-js app — core services (src/core), polimer models
            (src/models), views (src/views), reusable esp devtools (src/devtools)
+e2e/       Playwright end-to-end suite driving the real backend + frontend together
+worker/    Cloudflare Worker source for the CD routing layer (see Deployment, below)
+docs/      Setup runbooks (currently: Cloudflare/Oracle account provisioning for CD)
 ```
