@@ -13,6 +13,7 @@ export function ProgressView() {
   useEffect(() => {
     void dataService.refreshProgress();
     void dataService.refreshMissions();
+    void dataService.refreshMyGrade();
   }, [dataService]);
 
   if (!p) return <div className="text-desk-dim">Loading progress…</div>;
@@ -45,6 +46,25 @@ export function ProgressView() {
           <div className="text-xs uppercase tracking-wider text-desk-dim">badges</div>
         </div>
       </div>
+
+      {state.myGrade?.exists && (
+        <div className="panel">
+          <div className="panel-title">Instructor feedback</div>
+          <div className="p-4 space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div><div className="text-desk-dim text-xs uppercase">Risk management</div>
+                <div className="num font-semibold">{state.myGrade.riskManagementScore}/5</div></div>
+              <div><div className="text-desk-dim text-xs uppercase">Discipline</div>
+                <div className="num font-semibold">{state.myGrade.disciplineScore}/5</div></div>
+              <div><div className="text-desk-dim text-xs uppercase">Diversification</div>
+                <div className="num font-semibold">{state.myGrade.diversificationScore}/5</div></div>
+              <div><div className="text-desk-dim text-xs uppercase">Overall</div>
+                <div className="num font-semibold text-desk-accent">{state.myGrade.overallScore}/5</div></div>
+            </div>
+            {state.myGrade.feedback && <div className="text-sm text-desk-text">{state.myGrade.feedback}</div>}
+          </div>
+        </div>
+      )}
 
       <div className="panel">
         <div className="panel-title">

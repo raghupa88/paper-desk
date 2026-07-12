@@ -1,7 +1,7 @@
 import { Router, observeEvent } from 'esp-js';
 import { ImmutableModel } from 'esp-js-polimer';
 import { EventConst, ModelIds } from '../core/events';
-import { EquityPoint, OrderView, PortfolioView, Quote, ScorecardView, SettlementView } from '../core/types';
+import { EquityPoint, OrderView, PortfolioView, Quote, ScorecardView, SettlementView, TradeComment } from '../core/types';
 
 export interface TicketState {
   instrument: Quote | null;
@@ -28,6 +28,8 @@ export interface TradingState {
   settlements: SettlementView[];
   scorecard: ScorecardView | null;
   notifications: Notification[];
+  /** Instructor comments on my own orders, keyed by orderId, fetched on demand. */
+  orderComments: Record<number, TradeComment[]>;
 }
 
 export interface TradingModel extends ImmutableModel {
@@ -102,6 +104,11 @@ class TradingStateHandlers {
     draft.scorecard = scorecard;
   }
 
+  @observeEvent(EventConst.blotterCommentsLoaded)
+  onBlotterComments(draft: TradingState, ev: { orderId: number; comments: TradeComment[] }) {
+    draft.orderComments[ev.orderId] = ev.comments;
+  }
+
   @observeEvent(EventConst.accountEventReceived)
   onAccountEvent(draft: TradingState, ev: { type: string; detail: unknown }) {
     draft.notifications.unshift({ at: Date.now(), type: ev.type, detail: String(ev.detail) });
@@ -117,6 +124,7 @@ class TradingStateHandlers {
     draft.settlements = [];
     draft.scorecard = null;
     draft.notifications = [];
+    draft.orderComments = {};
   }
 }
 
@@ -126,7 +134,7 @@ export function registerTradingModel(router: Router) {
       modelId: ModelIds.trading,
       state: {
         ticket: emptyTicket(), portfolio: null, equityHistory: [],
-        blotter: [], settlements: [], scorecard: null, notifications: [],
+        blotter: [], settlements: [], scorecard: null, notifications: [], orderComments: {},
       },
     })
     .withStateHandlers('state', new TradingStateHandlers())

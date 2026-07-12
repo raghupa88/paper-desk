@@ -28,7 +28,7 @@ public class CohortController {
     public record JoinCohortRequest(String joinCode) {}
 
     /** One ranked leaderboard row — the shared shape behind both the JSON and CSV endpoints. */
-    public record LeaderboardEntry(int rank, String displayName, double equity, double returnPct,
+    public record LeaderboardEntry(int rank, long accountId, String displayName, double equity, double returnPct,
                                    double maxDrawdownPct, double xp, int level, String levelName) {}
 
     private static final String CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -108,6 +108,7 @@ public class CohortController {
         return computeLeaderboard(cohortId).stream().map(e -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("rank", e.rank());
+            m.put("accountId", e.accountId());
             m.put("displayName", e.displayName());
             m.put("equity", e.equity());
             m.put("returnPct", e.returnPct());
@@ -157,7 +158,7 @@ public class CohortController {
                 || memberRepo.findByCohortIdAndUserId(cohortId, userId).isPresent();
         if (!allowed) throw new SecurityException("Not a member of this cohort");
 
-        record Scored(String displayName, double equity, double returnPct, double maxDrawdownPct,
+        record Scored(long accountId, String displayName, double equity, double returnPct, double maxDrawdownPct,
                       double xp, int level, String levelName) {}
         List<Scored> scored = new ArrayList<>();
         for (CohortMember member : memberRepo.findByCohortId(cohortId)) {
@@ -167,7 +168,7 @@ public class CohortController {
             double equity = portfolio.equity(account.get());
             double ret = (equity / account.get().startingBalance - 1) * 100;
             Levels.Level level = Levels.forXp(account.get().xp);
-            scored.add(new Scored(user.displayName, equity, ret, maxDrawdownPct(account.get(), equity),
+            scored.add(new Scored(account.get().id, user.displayName, equity, ret, maxDrawdownPct(account.get(), equity),
                     account.get().xp, level.number(), level.name()));
         }
         scored.sort((a, b) -> Double.compare(b.equity(), a.equity()));
@@ -175,7 +176,7 @@ public class CohortController {
         List<LeaderboardEntry> out = new ArrayList<>();
         for (int i = 0; i < scored.size(); i++) {
             Scored s = scored.get(i);
-            out.add(new LeaderboardEntry(i + 1, s.displayName(), s.equity(), s.returnPct(),
+            out.add(new LeaderboardEntry(i + 1, s.accountId(), s.displayName(), s.equity(), s.returnPct(),
                     s.maxDrawdownPct(), s.xp(), s.level(), s.levelName()));
         }
         return out;

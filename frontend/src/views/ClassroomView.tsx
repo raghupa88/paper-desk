@@ -3,6 +3,7 @@ import { useServices } from '../AppContext';
 import { ModelIds } from '../core/events';
 import { InstructorModel, InstructorState } from '../models/InstructorModel';
 import { SessionModel } from '../models/SessionModel';
+import { StudentReviewPanel } from './StudentReviewPanel';
 import { useModelState, fmtMoney } from './common';
 import { Pnl } from './Pnl';
 
@@ -120,7 +121,8 @@ export function ClassroomView() {
         </div>
         <table className="tbl num">
           <thead><tr><th>#</th><th>Student</th><th>Level</th><th className="!text-right">Equity</th>
-            <th className="!text-right">Return</th><th className="!text-right">Max drawdown</th></tr></thead>
+            <th className="!text-right">Return</th><th className="!text-right">Max drawdown</th>
+            {isInstructor && <th></th>}</tr></thead>
           <tbody>
             {state.leaderboard.map(r => (
               <tr key={r.rank}>
@@ -133,13 +135,22 @@ export function ClassroomView() {
                 <td className="text-right">{fmtMoney(r.equity, 0)}</td>
                 <td className="text-right"><Pnl value={r.returnPct} kind="pct" /></td>
                 <td className="text-right text-desk-down">{r.maxDrawdownPct.toFixed(1)}%</td>
+                {isInstructor && (
+                  <td>
+                    <button className="btn text-xs normal-case"
+                            onClick={() => void dataService.reviewStudent(r.accountId)}>
+                      Review
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
             {state.leaderboard.length === 0 &&
-              <tr><td colSpan={5} className="text-desk-dim">Select a cohort to see standings.</td></tr>}
+              <tr><td colSpan={isInstructor ? 7 : 6} className="text-desk-dim">Select a cohort to see standings.</td></tr>}
           </tbody>
         </table>
       </div>
+      {isInstructor && <StudentReviewPanel />}
     </div>
   );
 }

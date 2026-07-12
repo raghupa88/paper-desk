@@ -4,9 +4,9 @@ import { AuthStore } from './AuthStore';
 import { StompService } from './StompService';
 import { EventConst, ModelIds } from './events';
 import {
-  AccountInfo, ChainData, ClockState, Cohort, LeaderboardRow, MissionView, OrderView, PairLadder,
-  PortfolioView, ProgressView, Quote, RfqQuote, Scenario, ScorecardView, SettlementView, StreakInfo,
-  UserInfo, Bar, EquityPoint,
+  AccountInfo, ChainData, ClockState, Cohort, CohortGrade, GradeInput, LeaderboardRow, MissionView,
+  OrderView, PairLadder, PortfolioView, ProgressView, Quote, RfqQuote, Scenario, ScorecardView,
+  SettlementView, StreakInfo, StudentDetail, TradeComment, UserInfo, Bar, EquityPoint,
 } from './types';
 
 /**
@@ -111,6 +111,7 @@ export class DataService {
     void this.refreshBlotter();
     void this.refreshProgress();
     void this.refreshMissions();
+    void this.refreshMyGrade();
   }
 
   // ---- sim clock ----
@@ -209,6 +210,12 @@ export class DataService {
     this.router.publishEvent(ModelIds.trading, EventConst.scorecardLoaded, scorecard);
   }
 
+  /** Instructor comments on one of my own trades — fetched on demand, e.g. expanding a blotter row. */
+  async loadOrderComments(orderId: number): Promise<void> {
+    const comments = await this.api.get<TradeComment[]>(`/api/orders/${orderId}/comments`);
+    this.router.publishEvent(ModelIds.trading, EventConst.blotterCommentsLoaded, { orderId, comments });
+  }
+
   // ---- gamification ----
 
   async refreshProgress(): Promise<void> {
@@ -221,6 +228,13 @@ export class DataService {
     if (this.accountId == null) return;
     const missions = await this.api.get<MissionView[]>(`/api/missions/${this.accountId}`);
     this.router.publishEvent(ModelIds.progress, EventConst.missionsLoaded, missions);
+  }
+
+  /** {exists:false} for an account not (yet) in an instructor's cohort -- not an error. */
+  async refreshMyGrade(): Promise<void> {
+    if (this.accountId == null) return;
+    const grade = await this.api.get<CohortGrade>(`/api/accounts/${this.accountId}/grade`);
+    this.router.publishEvent(ModelIds.progress, EventConst.myGradeLoaded, grade);
   }
 
   // ---- fx sales / trader ----
@@ -277,6 +291,35 @@ export class DataService {
     this.router.publishEvent(ModelIds.instructor, EventConst.leaderboardRequested, { cohortId });
     const rows = await this.api.get<LeaderboardRow[]>(`/api/cohorts/${cohortId}/leaderboard`);
     this.router.publishEvent(ModelIds.instructor, EventConst.leaderboardLoaded, { cohortId, rows });
+  }
+
+  /** Opens the grading/review panel for a specific student: portfolio + scorecard + blotter + their grade. */
+  async reviewStudent(accountId: number): Promise<void> {
+    const [detail, grade] = await Promise.all([
+      this.api.get<StudentDetail>(`/api/accounts/${accountId}/detail`),
+      this.api.get<CohortGrade>(`/api/accounts/${accountId}/grade`),
+    ]);
+    this.router.publishEvent(ModelIds.instructor, EventConst.studentDetailLoaded, detail);
+    this.router.publishEvent(ModelIds.instructor, EventConst.studentGradeLoaded, grade);
+  }
+
+  closeStudentReview(): void {
+    this.router.publishEvent(ModelIds.instructor, EventConst.studentReviewClosed, {});
+  }
+
+  async saveGrade(accountId: number, grade: GradeInput): Promise<void> {
+    const saved = await this.api.put<CohortGrade>(`/api/accounts/${accountId}/grade`, grade);
+    this.router.publishEvent(ModelIds.instructor, EventConst.studentGradeLoaded, saved);
+  }
+
+  async loadReviewComments(orderId: number): Promise<void> {
+    const comments = await this.api.get<TradeComment[]>(`/api/orders/${orderId}/comments`);
+    this.router.publishEvent(ModelIds.instructor, EventConst.reviewCommentsLoaded, { orderId, comments });
+  }
+
+  async addReviewComment(orderId: number, comment: string): Promise<void> {
+    await this.api.post(`/api/orders/${orderId}/comments`, { comment });
+    await this.loadReviewComments(orderId);
   }
 
   /**

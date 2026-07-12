@@ -96,6 +96,15 @@ cd e2e && npm ci && npx playwright test   # full-stack Playwright suite — see 
   max drawdown. Export the standings as a CSV gradebook (`⬇ Export CSV`) —
   `GET /api/cohorts/{id}/leaderboard.csv`, same authorization as the live leaderboard
   (instructor or a cohort member only).
+- **Instructor grading & feedback** — clicking "Review" on a leaderboard row opens a
+  read-only snapshot of that student's portfolio, scorecard and blotter (an instructor
+  can never place or cancel orders on a student's behalf), a 1–5 rubric across risk
+  management / discipline / diversification / overall plus written feedback, and
+  per-trade comments. Students see their grade on the Progress tab and instructor
+  comments inline in their own Blotter. `GET/PUT /api/accounts/{id}/grade`,
+  `GET/POST /api/orders/{id}/comments` — authorized via `AccountGuard.ownedOrInstructing`
+  / `requireInstructing` (the account owner, or the instructor of the cohort that
+  account's session belongs to).
 
 ## Gamification — XP, levels & badges
 

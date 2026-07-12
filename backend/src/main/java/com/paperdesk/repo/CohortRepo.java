@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface CohortRepo extends JpaRepository<Cohort, Long> {
     Optional<Cohort> findByJoinCode(String joinCode);
     List<Cohort> findByInstructorId(Long instructorId);
+    Optional<Cohort> findBySessionId(Long sessionId);
 }

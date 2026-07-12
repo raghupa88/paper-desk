@@ -51,6 +51,7 @@ export const EventConst = {
   // gamification / progress
   progressLoaded: 'progressLoaded',
   missionsLoaded: 'missionsLoaded',
+  myGradeLoaded: 'myGradeLoaded',
 
   // instructor
   cohortsLoaded: 'cohortsLoaded',
@@ -59,6 +60,13 @@ export const EventConst = {
   cohortJoined: 'cohortJoined',
   leaderboardRequested: 'leaderboardRequested',
   leaderboardLoaded: 'leaderboardLoaded',
+  studentDetailLoaded: 'studentDetailLoaded',
+  studentGradeLoaded: 'studentGradeLoaded',
+  studentReviewClosed: 'studentReviewClosed',
+  reviewCommentsLoaded: 'reviewCommentsLoaded',
+
+  // trading: per-order instructor comments on my own blotter
+  blotterCommentsLoaded: 'blotterCommentsLoaded',
 } as const;
 
 export const ModelIds = {
