@@ -234,6 +234,24 @@ export interface Challenge {
   leaderboard: ChallengeLeaderboardRow[];
 }
 
+export interface CurriculumStep {
+  stepOrder: number;
+  missionCode: string;
+  title: string;
+  description: string;
+  xp: number;
+  complete: boolean;
+  unlocked: boolean;
+}
+
+export interface Curriculum {
+  curriculumId: number;
+  cohortId: number;
+  name: string;
+  description: string | null;
+  steps: CurriculumStep[];
+}
+
 export interface StreakInfo {
   currentStreak: number;
   longestStreak: number;

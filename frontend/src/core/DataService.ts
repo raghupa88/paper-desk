@@ -4,9 +4,10 @@ import { AuthStore } from './AuthStore';
 import { StompService } from './StompService';
 import { EventConst, ModelIds } from './events';
 import {
-  AccountInfo, ChainData, Challenge, ClockState, Cohort, CohortGrade, GradeInput, LeaderboardRow,
-  MissionView, OrderView, PairLadder, PortfolioView, ProgressView, Quote, RfqQuote, Scenario,
-  ScorecardView, SettlementView, StreakInfo, StudentDetail, TradeComment, UserInfo, Bar, EquityPoint,
+  AccountInfo, ChainData, Challenge, ClockState, Cohort, CohortGrade, Curriculum, GradeInput,
+  LeaderboardRow, MissionView, OrderView, PairLadder, PortfolioView, ProgressView, Quote, RfqQuote,
+  Scenario, ScorecardView, SettlementView, StreakInfo, StudentDetail, TradeComment, UserInfo, Bar,
+  EquityPoint,
 } from './types';
 
 /**
@@ -296,6 +297,16 @@ export class DataService {
   async loadChallenges(cohortId: number): Promise<void> {
     const challenges = await this.api.get<Challenge[]>(`/api/cohorts/${cohortId}/challenges`);
     this.router.publishEvent(ModelIds.instructor, EventConst.challengesLoaded, { cohortId, challenges });
+  }
+
+  async loadCurricula(cohortId: number): Promise<void> {
+    const curricula = await this.api.get<Curriculum[]>(`/api/cohorts/${cohortId}/curricula`);
+    this.router.publishEvent(ModelIds.instructor, EventConst.curriculaLoaded, { cohortId, curricula });
+  }
+
+  async createCurriculum(cohortId: number, name: string, description: string, missionCodes: string[]): Promise<void> {
+    await this.api.post(`/api/cohorts/${cohortId}/curricula`, { name, description, missionCodes });
+    await this.loadCurricula(cohortId);
   }
 
   async createChallenge(cohortId: number, name: string, durationSimDays: number): Promise<void> {
