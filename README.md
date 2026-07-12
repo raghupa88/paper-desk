@@ -385,5 +385,10 @@ frontend/  webpack + React + esp-js app — core services (src/core), polimer mo
            (src/models), views (src/views), reusable esp devtools (src/devtools)
 e2e/       Playwright end-to-end suite driving the real backend + frontend together
 worker/    Cloudflare Worker source for the CD routing layer (see Deployment, below)
-docs/      Setup runbooks (currently: Cloudflare/Postgres account provisioning for CD)
+docs/      docs/architecture.md (system design, dev-vs-prod differences) and
+           setup runbooks (currently: Cloudflare/Postgres account provisioning for CD)
 ```
+
+See `docs/architecture.md` for how the pieces fit together — component
+responsibilities, the request/WebSocket data flow, the auth model, and a
+dedicated dev-vs-prod differences table.
