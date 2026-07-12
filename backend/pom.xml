@@ -50,21 +50,22 @@
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
     </dependency>
-    <!-- H2 in Oracle compatibility mode for dev/test; swap to real Oracle via config -->
+    <!-- H2 in PostgreSQL compatibility mode for dev/test; swap to real Postgres via config -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
     </dependency>
-    <!-- Oracle JDBC + Flyway Oracle support so a real Oracle datasource is config-only -->
+    <!-- Postgres JDBC driver + Flyway Postgres support so a real Postgres
+         datasource is config-only -->
     <dependency>
-      <groupId>com.oracle.database.jdbc</groupId>
-      <artifactId>ojdbc11</artifactId>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-database-oracle</artifactId>
+      <artifactId>flyway-database-postgresql</artifactId>
       <scope>runtime</scope>
     </dependency>
     <dependency>
