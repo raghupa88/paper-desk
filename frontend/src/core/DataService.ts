@@ -5,7 +5,8 @@ import { StompService } from './StompService';
 import { EventConst, ModelIds } from './events';
 import {
   AccountInfo, ChainData, ClockState, Cohort, LeaderboardRow, MissionView, OrderView, PairLadder,
-  PortfolioView, ProgressView, Quote, RfqQuote, Scenario, SettlementView, StreakInfo, UserInfo, Bar, EquityPoint,
+  PortfolioView, ProgressView, Quote, RfqQuote, Scenario, ScorecardView, SettlementView, StreakInfo,
+  UserInfo, Bar, EquityPoint,
 } from './types';
 
 /**
@@ -200,6 +201,12 @@ export class DataService {
     if (this.accountId == null) return;
     const settlements = await this.api.get<SettlementView[]>(`/api/portfolio/${this.accountId}/settlements`);
     this.router.publishEvent(ModelIds.trading, EventConst.settlementsLoaded, settlements);
+  }
+
+  async refreshScorecard(): Promise<void> {
+    if (this.accountId == null) return;
+    const scorecard = await this.api.get<ScorecardView>(`/api/portfolio/${this.accountId}/scorecard`);
+    this.router.publishEvent(ModelIds.trading, EventConst.scorecardLoaded, scorecard);
   }
 
   // ---- gamification ----

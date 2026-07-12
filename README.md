@@ -84,6 +84,12 @@ cd e2e && npm ci && npx playwright test   # full-stack Playwright suite — see 
   spot shifts).
 - **Portfolio** — live marks, unrealized/realized P&L, per-position Greeks, margin
   usage, settlement/lifecycle history.
+- **Scorecard** — trader performance analytics from closed-trade history: win rate,
+  average win/loss, average holding period, and max drawdown (from the daily equity
+  curve). `GET /api/portfolio/{accountId}/scorecard`; each closing or flipping fill
+  in `OrderService.applyFill()` appends a `closed_trades` row alongside the running
+  `Position.realizedPnl` total, since the latter can't answer "how did this one trade
+  do" on its own.
 - **Blotter** — every order with fills, statuses, reject reasons, sales/trader tags.
 - **Classroom** — instructors create cohorts (dedicated seeded session + join code
   + starting balance); students join; leaderboard ranks by equity with return % and

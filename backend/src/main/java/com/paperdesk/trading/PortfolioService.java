@@ -1,16 +1,20 @@
 package com.paperdesk.trading;
 
 import com.paperdesk.domain.Account;
+import com.paperdesk.domain.ClosedTrade;
 import com.paperdesk.domain.Enums.InstrumentType;
+import com.paperdesk.domain.EquitySnapshot;
 import com.paperdesk.domain.Instrument;
 import com.paperdesk.domain.Position;
 import com.paperdesk.pricing.BlackScholes;
 import com.paperdesk.repo.AccountRepo;
+import com.paperdesk.repo.ClosedTradeRepo;
 import com.paperdesk.repo.EquitySnapshotRepo;
 import com.paperdesk.repo.PositionRepo;
 import com.paperdesk.sim.MarketDataService;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,16 +35,24 @@ public class PortfolioService {
                                 double equity, double startingBalance, double totalReturnPct, double dayPnl,
                                 List<PositionView> positions) {}
 
+    /** Personal performance analytics computed from closed trades and the equity curve. */
+    public record ScorecardView(int totalTrades, int wins, int losses, double winRatePct,
+                                double avgWin, double avgLoss, double avgHoldingPeriodHours,
+                                double maxDrawdown, double maxDrawdownPct) {}
+
     private final PositionRepo positionRepo;
     private final AccountRepo accountRepo;
     private final EquitySnapshotRepo snapshotRepo;
+    private final ClosedTradeRepo closedTradeRepo;
     private final MarketDataService market;
 
     public PortfolioService(PositionRepo positionRepo, AccountRepo accountRepo,
-                            EquitySnapshotRepo snapshotRepo, MarketDataService market) {
+                            EquitySnapshotRepo snapshotRepo, ClosedTradeRepo closedTradeRepo,
+                            MarketDataService market) {
         this.positionRepo = positionRepo;
         this.accountRepo = accountRepo;
         this.snapshotRepo = snapshotRepo;
+        this.closedTradeRepo = closedTradeRepo;
         this.market = market;
     }
 
@@ -68,6 +80,36 @@ public class PortfolioService {
             positionsValue += view(pos).marketValue();
         }
         return account.cashBalance + account.marginHeld + positionsValue;
+    }
+
+    public ScorecardView scorecard(long accountId) {
+        List<ClosedTrade> trades = closedTradeRepo.findByAccountIdOrderByClosedSimTimeDesc(accountId);
+        int wins = 0, losses = 0;
+        double sumWin = 0, sumLoss = 0, sumHoldingHours = 0;
+        for (ClosedTrade t : trades) {
+            if (t.realizedPnl > 0) { wins++; sumWin += t.realizedPnl; }
+            else if (t.realizedPnl < 0) { losses++; sumLoss += t.realizedPnl; }
+            sumHoldingHours += Duration.between(t.openedSimTime, t.closedSimTime).toMinutes() / 60.0;
+        }
+        int total = trades.size();
+        double winRatePct = total == 0 ? 0 : (double) wins / total * 100;
+        double avgWin = wins == 0 ? 0 : sumWin / wins;
+        double avgLoss = losses == 0 ? 0 : sumLoss / losses;
+        double avgHoldingPeriodHours = total == 0 ? 0 : sumHoldingHours / total;
+
+        List<EquitySnapshot> curve = snapshotRepo.findByAccountIdOrderBySimDate(accountId);
+        double peak = curve.isEmpty() ? 0 : curve.get(0).equity;
+        double maxDrawdown = 0, maxDrawdownPct = 0;
+        for (EquitySnapshot s : curve) {
+            peak = Math.max(peak, s.equity);
+            double dd = peak - s.equity;
+            if (dd > maxDrawdown) maxDrawdown = dd;
+            double ddPct = peak == 0 ? 0 : dd / peak * 100;
+            if (ddPct > maxDrawdownPct) maxDrawdownPct = ddPct;
+        }
+
+        return new ScorecardView(total, wins, losses, winRatePct, avgWin, avgLoss,
+                avgHoldingPeriodHours, maxDrawdown, maxDrawdownPct);
     }
 
     private PositionView view(Position pos) {

@@ -14,6 +14,7 @@ import { OptionsChainView } from './views/OptionsChainView';
 import { FxSalesView } from './views/FxSalesView';
 import { FxTraderView } from './views/FxTraderView';
 import { PortfolioView } from './views/PortfolioView';
+import { ScorecardView } from './views/ScorecardView';
 import { BlotterView } from './views/BlotterView';
 import { ClassroomView } from './views/ClassroomView';
 import { ProgressView } from './views/ProgressView';
@@ -22,7 +23,7 @@ import { GettingStartedGuide } from './views/GettingStartedGuide';
 import { DevToolsLauncher } from './devtools/DevToolsLauncher';
 
 export type DeskTab = 'dashboard' | 'market' | 'options' | 'fx-sales' | 'fx-trader'
-  | 'portfolio' | 'blotter' | 'progress' | 'classroom';
+  | 'portfolio' | 'scorecard' | 'blotter' | 'progress' | 'classroom';
 
 const TABS: Array<{ id: DeskTab; label: string }> = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -31,6 +32,7 @@ const TABS: Array<{ id: DeskTab; label: string }> = [
   { id: 'fx-sales', label: 'FX Sales' },
   { id: 'fx-trader', label: 'FX Trader' },
   { id: 'portfolio', label: 'Portfolio' },
+  { id: 'scorecard', label: 'Scorecard' },
   { id: 'blotter', label: 'Blotter' },
   { id: 'progress', label: 'Progress' },
   { id: 'classroom', label: 'Classroom' },
@@ -75,6 +77,7 @@ function Shell() {
         {tab === 'fx-sales' && <FxSalesView />}
         {tab === 'fx-trader' && <FxTraderView />}
         {tab === 'portfolio' && <PortfolioView />}
+        {tab === 'scorecard' && <ScorecardView />}
         {tab === 'blotter' && <BlotterView />}
         {tab === 'progress' && <ProgressView />}
         {tab === 'classroom' && <ClassroomView />}

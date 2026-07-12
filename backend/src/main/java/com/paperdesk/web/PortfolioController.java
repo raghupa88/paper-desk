@@ -36,6 +36,13 @@ public class PortfolioController {
         return portfolio.portfolio(accountId);
     }
 
+    /** Trader scorecard: win rate, avg win/loss, holding period, and max drawdown. */
+    @GetMapping("/{accountId}/scorecard")
+    public PortfolioService.ScorecardView scorecard(@PathVariable long accountId) {
+        guard.owned(accountId);
+        return portfolio.scorecard(accountId);
+    }
+
     /** Settlement/lifecycle events: daily futures MTM, margin calls, expiries, fixings. */
     @GetMapping("/{accountId}/settlements")
     public List<Map<String, Object>> settlements(@PathVariable long accountId) {
