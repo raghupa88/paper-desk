@@ -25,6 +25,12 @@ paperdesk:
   jwt:
     secret: "dev-only-secret-change-me-0123456789-0123456789-0123456789"
     ttl-hours: 72
+  coach:
+    # Optional: the "explain this trade" AI coach degrades gracefully (returns
+    # configured:false) when this is blank, rather than failing startup like
+    # the JWT secret does -- it's a bonus feature, not core functionality.
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${PAPERDESK_COACH_MODEL:claude-haiku-4-5-20251001}
   sim:
     tick-millis: 1000          # real-time engine tick
     grid-step-sim-seconds: 300 # one GBM step per 5 sim minutes

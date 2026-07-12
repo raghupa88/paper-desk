@@ -91,6 +91,7 @@ use Environments:
 | `SPRING_DATASOURCE_PASSWORD` | §2 |
 | `PAPERDESK_JWT_SECRET` | generate yourself: `openssl rand -base64 48` — a random value, not something I need to see |
 | `PAPERDESK_ALLOWED_ORIGIN` | the real public hostname once you've picked a domain, e.g. `https://paperdesk.example.com` |
+| `ANTHROPIC_API_KEY` | optional — only needed to turn on the AI trading coach ("explain this trade" on the Blotter); everything else runs fine without it, the coach just reports itself as not configured |
 
 **Prefer setting secret values yourself directly in the GitHub UI** rather
 than pasting them into chat — I don't need to see the raw values to write the

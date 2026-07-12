@@ -91,6 +91,14 @@ cd e2e && npm ci && npx playwright test   # full-stack Playwright suite — see 
   `Position.realizedPnl` total, since the latter can't answer "how did this one trade
   do" on its own.
 - **Blotter** — every order with fills, statuses, reject reasons, sales/trader tags.
+- **AI trading coach** — a 🤖 button on each filled blotter row asks Claude (Haiku 4.5
+  by default) to explain that specific trade in plain language, grounded only in that
+  order's own fills, instrument/Greeks and account data (never invented). Degrades
+  gracefully rather than failing startup when no key is configured: set
+  `ANTHROPIC_API_KEY` (and optionally `PAPERDESK_COACH_MODEL`) to turn it on; with no
+  key the endpoint still returns 200 with `configured:false` and the UI shows "AI coach
+  isn't configured on this deployment yet." `POST /api/orders/{id}/explain` —
+  authorized via `AccountGuard.owned` (a student explains only their own trades).
 - **Classroom** — instructors create cohorts (dedicated seeded session + join code
   + starting balance); students join; leaderboard ranks by equity with return % and
   max drawdown. Export the standings as a CSV gradebook (`⬇ Export CSV`) —
