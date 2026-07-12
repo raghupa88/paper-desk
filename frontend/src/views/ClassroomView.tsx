@@ -24,6 +24,9 @@ export function ClassroomView() {
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [challengeName, setChallengeName] = useState('');
+  const [challengeDays, setChallengeDays] = useState(7);
+  const [creatingChallenge, setCreatingChallenge] = useState(false);
 
   useEffect(() => {
     void dataService.refreshCohorts();
@@ -33,10 +36,24 @@ export function ClassroomView() {
 
   useEffect(() => {
     if (state.selectedCohortId == null) return;
-    void dataService.loadLeaderboard(state.selectedCohortId);
-    const t = window.setInterval(() => void dataService.loadLeaderboard(state.selectedCohortId!), 5000);
+    const refresh = () => {
+      void dataService.loadLeaderboard(state.selectedCohortId!);
+      void dataService.loadChallenges(state.selectedCohortId!);
+    };
+    refresh();
+    const t = window.setInterval(refresh, 5000);
     return () => window.clearInterval(t);
   }, [state.selectedCohortId, dataService]);
+
+  const createChallenge = () => {
+    if (!selected || !challengeName) return;
+    setError(null);
+    setCreatingChallenge(true);
+    dataService.createChallenge(selected.cohortId, challengeName, challengeDays)
+      .then(() => setChallengeName(''))
+      .catch(e => setError(e.message))
+      .finally(() => setCreatingChallenge(false));
+  };
 
   const run = (fn: () => Promise<void>) => {
     setError(null);
@@ -110,45 +127,105 @@ export function ClassroomView() {
         {error && <div role="alert" className="text-desk-down text-sm">{error}</div>}
       </div>
 
-      <div className="panel flex-1 w-full overflow-x-auto">
-        <div className="panel-title flex flex-wrap items-center justify-between gap-2">
-          <span>Leaderboard {selected ? `— ${selected.name} (${selected.scenarioName})` : ''}</span>
-          {selected && (
-            <button className="btn text-xs normal-case" disabled={exporting} onClick={exportCsv}>
-              {exporting ? 'Exporting…' : '⬇ Export CSV'}
-            </button>
-          )}
-        </div>
-        <table className="tbl num">
-          <thead><tr><th>#</th><th>Student</th><th>Level</th><th className="!text-right">Equity</th>
-            <th className="!text-right">Return</th><th className="!text-right">Max drawdown</th>
-            {isInstructor && <th></th>}</tr></thead>
-          <tbody>
-            {state.leaderboard.map(r => (
-              <tr key={r.rank}>
-                <td className="font-semibold">{r.rank}</td>
-                <td>{r.displayName}</td>
-                <td>
-                  <span className="text-desk-accent font-semibold">{r.level}</span>
-                  <span className="text-xs text-desk-dim ml-1">{r.levelName}</span>
-                </td>
-                <td className="text-right">{fmtMoney(r.equity, 0)}</td>
-                <td className="text-right"><Pnl value={r.returnPct} kind="pct" /></td>
-                <td className="text-right text-desk-down">{r.maxDrawdownPct.toFixed(1)}%</td>
-                {isInstructor && (
+      <div className="flex-1 w-full space-y-4">
+        <div className="panel overflow-x-auto">
+          <div className="panel-title flex flex-wrap items-center justify-between gap-2">
+            <span>Leaderboard {selected ? `— ${selected.name} (${selected.scenarioName})` : ''}</span>
+            {selected && (
+              <button className="btn text-xs normal-case" disabled={exporting} onClick={exportCsv}>
+                {exporting ? 'Exporting…' : '⬇ Export CSV'}
+              </button>
+            )}
+          </div>
+          <table className="tbl num">
+            <thead><tr><th>#</th><th>Student</th><th>Level</th><th className="!text-right">Equity</th>
+              <th className="!text-right">Return</th><th className="!text-right">Max drawdown</th>
+              {isInstructor && <th></th>}</tr></thead>
+            <tbody>
+              {state.leaderboard.map(r => (
+                <tr key={r.rank}>
+                  <td className="font-semibold">{r.rank}</td>
+                  <td>{r.displayName}</td>
                   <td>
-                    <button className="btn text-xs normal-case"
-                            onClick={() => void dataService.reviewStudent(r.accountId)}>
-                      Review
-                    </button>
+                    <span className="text-desk-accent font-semibold">{r.level}</span>
+                    <span className="text-xs text-desk-dim ml-1">{r.levelName}</span>
                   </td>
-                )}
-              </tr>
-            ))}
-            {state.leaderboard.length === 0 &&
-              <tr><td colSpan={isInstructor ? 7 : 6} className="text-desk-dim">Select a cohort to see standings.</td></tr>}
-          </tbody>
-        </table>
+                  <td className="text-right">{fmtMoney(r.equity, 0)}</td>
+                  <td className="text-right"><Pnl value={r.returnPct} kind="pct" /></td>
+                  <td className="text-right text-desk-down">{r.maxDrawdownPct.toFixed(1)}%</td>
+                  {isInstructor && (
+                    <td>
+                      <button className="btn text-xs normal-case"
+                              onClick={() => void dataService.reviewStudent(r.accountId)}>
+                        Review
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+              {state.leaderboard.length === 0 &&
+                <tr><td colSpan={isInstructor ? 7 : 6} className="text-desk-dim">Select a cohort to see standings.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+
+        {selected && (
+          <div className="panel overflow-x-auto">
+            <div className="panel-title">Challenges — timed sprints scored on equity change since kickoff</div>
+            {isInstructor && (
+              <div className="flex flex-wrap items-end gap-2 p-4 border-b border-desk-border">
+                <label className="text-xs text-desk-dim flex flex-col gap-1">
+                  Challenge name
+                  <input className="input" placeholder="e.g. Week 1 Sprint" value={challengeName}
+                         onChange={e => setChallengeName(e.target.value)} />
+                </label>
+                <label className="text-xs text-desk-dim flex flex-col gap-1">
+                  Duration (sim days)
+                  <input className="input w-24" type="number" min={1} value={challengeDays}
+                         onChange={e => setChallengeDays(Number(e.target.value))} />
+                </label>
+                <button className="btn btn-accent text-xs normal-case" disabled={!challengeName || creatingChallenge}
+                        onClick={createChallenge}>
+                  {creatingChallenge ? 'Starting…' : 'Start challenge'}
+                </button>
+              </div>
+            )}
+            <div className="divide-y divide-desk-border">
+              {state.challenges.map(c => (
+                <div key={c.challengeId} className="p-4">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className="font-semibold">{c.name}</span>
+                    <span className={`text-[10px] uppercase tracking-wider rounded px-1.5 py-0.5 border
+                                      ${c.active ? 'text-desk-up border-desk-up' : 'text-desk-dim border-desk-dim'}`}>
+                      {c.active ? 'Active' : 'Ended'}
+                    </span>
+                    <span className="text-xs text-desk-dim">
+                      {c.startSimDate} → {c.endSimDate} ({c.durationSimDays} sim days)
+                    </span>
+                  </div>
+                  <table className="tbl num">
+                    <thead><tr><th>#</th><th>Student</th><th className="!text-right">Return since kickoff</th></tr></thead>
+                    <tbody>
+                      {c.leaderboard.map(r => (
+                        <tr key={r.rank}>
+                          <td className="font-semibold">{r.rank}</td>
+                          <td>{r.displayName}</td>
+                          <td className="text-right"><Pnl value={r.returnPct} kind="pct" /></td>
+                        </tr>
+                      ))}
+                      {c.leaderboard.length === 0 &&
+                        <tr><td colSpan={3} className="text-desk-dim">No entries.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+              {state.challenges.length === 0 &&
+                <div className="p-4 text-desk-dim text-sm">
+                  {isInstructor ? 'No challenges yet — start a timed sprint above.' : 'No challenges running yet.'}
+                </div>}
+            </div>
+          </div>
+        )}
       </div>
       {isInstructor && <StudentReviewPanel />}
     </div>

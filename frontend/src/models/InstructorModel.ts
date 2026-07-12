@@ -1,12 +1,13 @@
 import { Router, observeEvent } from 'esp-js';
 import { ImmutableModel } from 'esp-js-polimer';
 import { EventConst, ModelIds } from '../core/events';
-import { Cohort, CohortGrade, LeaderboardRow, StudentDetail, TradeComment } from '../core/types';
+import { Challenge, Cohort, CohortGrade, LeaderboardRow, StudentDetail, TradeComment } from '../core/types';
 
 export interface InstructorState {
   cohorts: Cohort[];
   selectedCohortId: number | null;
   leaderboard: LeaderboardRow[];
+  challenges: Challenge[];
   busy: boolean;
   /** The student currently open in the grading/review panel, if any. */
   reviewing: StudentDetail | null;
@@ -50,6 +51,11 @@ class InstructorStateHandlers {
     if (ev.cohortId === draft.selectedCohortId) draft.leaderboard = ev.rows;
   }
 
+  @observeEvent(EventConst.challengesLoaded)
+  onChallenges(draft: InstructorState, ev: { cohortId: number; challenges: Challenge[] }) {
+    if (ev.cohortId === draft.selectedCohortId) draft.challenges = ev.challenges;
+  }
+
   @observeEvent(EventConst.studentDetailLoaded)
   onStudentDetail(draft: InstructorState, detail: StudentDetail) {
     draft.reviewing = detail;
@@ -79,7 +85,7 @@ export function registerInstructorModel(router: Router) {
     .withInitialModel({
       modelId: ModelIds.instructor,
       state: {
-        cohorts: [], selectedCohortId: null, leaderboard: [], busy: false,
+        cohorts: [], selectedCohortId: null, leaderboard: [], challenges: [], busy: false,
         reviewing: null, reviewGrade: null, reviewComments: {},
       },
     })
