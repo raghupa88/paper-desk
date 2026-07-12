@@ -257,11 +257,16 @@ PostgreSQL and the driver ships with the build. Point the datasource at
 Postgres and start:
 
 ```bash
+# terminal 1: start Postgres + the backend against it
 docker compose up -d postgres   # postgres:17-alpine
+cd backend
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/paperdesk \
 SPRING_DATASOURCE_USERNAME=paperdesk \
 SPRING_DATASOURCE_PASSWORD=paperdesk \
 mvn spring-boot:run
+
+# terminal 2: query it directly
+docker compose exec postgres psql -U paperdesk -d paperdesk -c "SELECT id, email, display_name, role, created_at FROM users;"
 ```
 
 (Earlier versions of this app targeted Oracle specifically; it moved to
