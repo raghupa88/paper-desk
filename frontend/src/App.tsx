@@ -18,6 +18,7 @@ import { BlotterView } from './views/BlotterView';
 import { ClassroomView } from './views/ClassroomView';
 import { ProgressView } from './views/ProgressView';
 import { ToastHost } from './views/ToastHost';
+import { GettingStartedGuide } from './views/GettingStartedGuide';
 import { DevToolsLauncher } from './devtools/DevToolsLauncher';
 
 export type DeskTab = 'dashboard' | 'market' | 'options' | 'fx-sales' | 'fx-trader'
@@ -66,6 +67,7 @@ function Shell() {
                onClick={() => setTab(t.id)}>{t.label}</div>
         ))}
       </nav>
+      <GettingStartedGuide onGoToMarket={() => setTab('market')} onGoToProgress={() => setTab('progress')} />
       <main className="flex-1 p-3 sm:p-4 overflow-auto">
         {tab === 'dashboard' && <DashboardView />}
         {tab === 'market' && <MarketView />}
