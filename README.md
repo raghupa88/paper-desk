@@ -105,6 +105,13 @@ cd e2e && npm ci && npx playwright test   # full-stack Playwright suite — see 
   `GET/POST /api/orders/{id}/comments` — authorized via `AccountGuard.ownedOrInstructing`
   / `requireInstructing` (the account owner, or the instructor of the cohort that
   account's session belongs to).
+- **Timed challenges** — an instructor starts a sprint (name + duration in sim days)
+  inside a cohort; every current cohort member is auto-enrolled with their equity at
+  that moment as the baseline, and the challenge gets its own equity-since-kickoff
+  leaderboard — a short competitive event layered on top of the always-on cohort
+  leaderboard, not a replacement for it. "Active" vs "Ended" is derived at read time
+  by comparing the cohort session's current sim date to the challenge's end date, so
+  there's no background job needed to close one out. `POST/GET /api/cohorts/{id}/challenges`.
 
 ## Gamification — XP, levels & badges
 

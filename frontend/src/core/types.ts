@@ -215,6 +215,25 @@ export interface Cohort {
   accountId?: number;
 }
 
+export interface ChallengeLeaderboardRow {
+  rank: number;
+  displayName: string;
+  startingEquity: number;
+  currentEquity: number;
+  returnPct: number;
+}
+
+export interface Challenge {
+  challengeId: number;
+  cohortId: number;
+  name: string;
+  durationSimDays: number;
+  startSimDate: string;
+  endSimDate: string;
+  active: boolean;
+  leaderboard: ChallengeLeaderboardRow[];
+}
+
 export interface StreakInfo {
   currentStreak: number;
   longestStreak: number;

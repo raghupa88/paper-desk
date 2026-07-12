@@ -64,6 +64,8 @@ export const EventConst = {
   studentGradeLoaded: 'studentGradeLoaded',
   studentReviewClosed: 'studentReviewClosed',
   reviewCommentsLoaded: 'reviewCommentsLoaded',
+  challengesLoaded: 'challengesLoaded',
+  createChallengeRequested: 'createChallengeRequested',
 
   // trading: per-order instructor comments on my own blotter
   blotterCommentsLoaded: 'blotterCommentsLoaded',
