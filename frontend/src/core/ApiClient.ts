@@ -12,6 +12,10 @@ export class ApiClient {
     return this.request<T>('POST', path, body);
   }
 
+  async put<T>(path: string, body?: unknown): Promise<T> {
+    return this.request<T>('PUT', path, body);
+  }
+
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const token = this.auth.token;

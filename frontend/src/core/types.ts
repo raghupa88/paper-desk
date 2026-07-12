@@ -223,6 +223,7 @@ export interface StreakInfo {
 
 export interface LeaderboardRow {
   rank: number;
+  accountId: number;
   displayName: string;
   equity: number;
   returnPct: number;
@@ -230,6 +231,41 @@ export interface LeaderboardRow {
   xp: number;
   level: number;
   levelName: string;
+}
+
+export interface CohortGrade {
+  exists: boolean;
+  riskManagementScore?: number;
+  disciplineScore?: number;
+  diversificationScore?: number;
+  overallScore?: number;
+  feedback?: string;
+  updatedAt?: string;
+}
+
+export interface GradeInput {
+  riskManagementScore: number;
+  disciplineScore: number;
+  diversificationScore: number;
+  overallScore: number;
+  feedback: string;
+}
+
+export interface StudentDetail {
+  accountId: number;
+  displayName: string;
+  portfolio: PortfolioView;
+  scorecard: ScorecardView;
+  blotter: OrderView[];
+  settlements: SettlementView[];
+}
+
+export interface TradeComment {
+  id: number;
+  orderId: number;
+  instructorName: string;
+  comment: string;
+  createdAt: string;
 }
 
 export interface BadgeView {

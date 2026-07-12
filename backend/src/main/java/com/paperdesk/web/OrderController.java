@@ -1,16 +1,22 @@
 package com.paperdesk.web;
 
+import com.paperdesk.config.SecurityConfig;
 import com.paperdesk.domain.Enums.OrderSide;
 import com.paperdesk.domain.Enums.OrderType;
 import com.paperdesk.domain.Enums.ViewContext;
 import com.paperdesk.domain.Fill;
+import com.paperdesk.domain.TradeComment;
 import com.paperdesk.domain.TradeOrder;
+import com.paperdesk.domain.User;
 import com.paperdesk.repo.FillRepo;
 import com.paperdesk.repo.OrderRepo;
+import com.paperdesk.repo.TradeCommentRepo;
+import com.paperdesk.repo.UserRepo;
 import com.paperdesk.sim.MarketDataService;
 import com.paperdesk.trading.OrderService;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,18 +27,24 @@ public class OrderController {
     public record PlaceOrderRequest(long accountId, long instrumentId, OrderSide side, OrderType type,
                                     double qty, Double limitPrice, ViewContext viewContext) {}
     public record CancelRequest(long accountId) {}
+    public record CommentRequest(String comment) {}
 
     private final OrderService orders;
     private final OrderRepo orderRepo;
     private final FillRepo fillRepo;
+    private final TradeCommentRepo commentRepo;
+    private final UserRepo userRepo;
     private final MarketDataService market;
     private final AccountGuard guard;
 
     public OrderController(OrderService orders, OrderRepo orderRepo, FillRepo fillRepo,
+                           TradeCommentRepo commentRepo, UserRepo userRepo,
                            MarketDataService market, AccountGuard guard) {
         this.orders = orders;
         this.orderRepo = orderRepo;
         this.fillRepo = fillRepo;
+        this.commentRepo = commentRepo;
+        this.userRepo = userRepo;
         this.market = market;
         this.guard = guard;
     }
@@ -61,6 +73,40 @@ public class OrderController {
                 .findByOrderIdIn(all.stream().map(o -> o.id).toList())
                 .stream().collect(Collectors.groupingBy(f -> f.orderId));
         return all.stream().map(o -> orderJson(o, fills.getOrDefault(o.id, List.of()))).toList();
+    }
+
+    /** Comments on a trade -- readable by the student who placed it or the cohort's instructor. */
+    @GetMapping("/{orderId}/comments")
+    public List<Map<String, Object>> comments(@PathVariable long orderId) {
+        TradeOrder order = orderRepo.findById(orderId).orElseThrow();
+        guard.ownedOrInstructing(order.accountId);
+        return commentRepo.findByOrderIdOrderByCreatedAt(orderId).stream().map(this::commentJson).toList();
+    }
+
+    /** Only the cohort's instructor may leave feedback on a student's trade. */
+    @PostMapping("/{orderId}/comments")
+    public Map<String, Object> addComment(@PathVariable long orderId, @RequestBody CommentRequest req) {
+        TradeOrder order = orderRepo.findById(orderId).orElseThrow();
+        guard.requireInstructing(order.accountId);
+        TradeComment comment = new TradeComment();
+        comment.orderId = orderId;
+        comment.accountId = order.accountId;
+        comment.instructorId = SecurityConfig.currentUserId();
+        comment.comment = req.comment();
+        comment.createdAt = Instant.now();
+        commentRepo.save(comment);
+        return commentJson(comment);
+    }
+
+    private Map<String, Object> commentJson(TradeComment c) {
+        User instructor = userRepo.findById(c.instructorId).orElseThrow();
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", c.id);
+        m.put("orderId", c.orderId);
+        m.put("instructorName", instructor.displayName);
+        m.put("comment", c.comment);
+        m.put("createdAt", c.createdAt.toString());
+        return m;
     }
 
     private Map<String, Object> orderJson(TradeOrder o, List<Fill> fills) {
