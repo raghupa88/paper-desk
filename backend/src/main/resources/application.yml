@@ -5,15 +5,15 @@ spring:
   application:
     name: paper-desk
   datasource:
-    # H2 in Oracle compatibility mode for dev. For real Oracle, override via
+    # H2 in PostgreSQL compatibility mode for dev. For real Postgres, override via
     # SPRING_DATASOURCE_URL / USERNAME / PASSWORD, e.g.
-    #   jdbc:oracle:thin:@//localhost:1521/FREEPDB1
-    url: jdbc:h2:mem:paperdesk;MODE=Oracle;DATABASE_TO_LOWER=FALSE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    #   jdbc:postgresql://localhost:5432/paperdesk
+    url: jdbc:h2:mem:paperdesk;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
     username: sa
     password: ""
   jpa:
-    # Flyway owns the schema; Hibernate's validator flags NUMBER(19) vs BIGINT
-    # false-positives under H2's Oracle mode, so validation stays off.
+    # Flyway owns the schema; Hibernate's validator can false-positive on
+    # H2's Postgres-mode type reporting, so validation stays off.
     hibernate:
       ddl-auto: none
     open-in-view: false

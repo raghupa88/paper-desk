@@ -30,69 +30,51 @@ Settings → Environments → `production` → Secrets, see §3):
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-## 2. Oracle database (real Oracle for prod — the Flyway migrations are
-   Oracle-dialect, so this must be real Oracle, not Postgres/MySQL)
+## 2. Postgres database (Supabase free tier — no card required)
 
-Oracle Cloud's Always Free Autonomous Database requires a credit card for
-identity verification at signup, even though the tier itself is free. If
-you'd rather not hand that over, self-host **Oracle Database Free (23ai)**
-instead — the same image this repo already uses for local dev/test parity
-(`docker-compose.yml`, `gvenzl/oracle-free:23-slim`, no Oracle account or
-card needed at all) — and reach it from the Cloudflare Container over a
-**Cloudflare Tunnel** rather than a public IP. This reuses the Cloudflare
-account from §1 and needs nothing new signed up for.
+The app originally targeted Oracle specifically (the Flyway migrations were
+Oracle-dialect). That's been dropped: both Oracle Cloud's Always Free tier
+*and* Cloudflare Tunnel/Zero Trust (the self-hosting workaround considered
+in between) turned out to require a credit card for identity verification,
+even on their free tiers. The schema is now plain PostgreSQL
+(`backend/src/main/resources/db/migration`), which opens up **Supabase** —
+a managed Postgres host with a free tier confirmed to need no card at all,
+and no tunnel/self-hosting gymnastics since it's reachable over the public
+internet with TLS, same as Oracle ADB was originally meant to be.
 
-**⚠️ UNVERIFIED end-to-end** — this wiring hasn't been tested live yet
-(same caveat as the Worker↔Container spike in the CD plan). The mechanism
-below (`cloudflared access tcp` run *inside* the backend container, talking
-to a tunnel hosted on your machine) is a documented Cloudflare Zero Trust
-pattern for reaching a private TCP service, but the exact current CLI
-flags/product naming should be checked against Cloudflare's live docs at
-setup time, and it must be proven to survive an idle JDBC pool (HikariCP)
-for several minutes before this is trusted for real use — do that check
-before wiring `cd.yml` around it.
+**Real trade-off to know going in**: Supabase's free tier pauses a project
+after 7 days with no database traffic (auto-resumes on the next connection
+attempt, with a startup delay). Fine for active use; if the app might sit
+idle for a week+, either accept the occasional cold-start delay or add a
+low-frequency scheduled health-check ping later to keep it warm.
 
-**Real trade-off to accept going in**: the database now lives on a machine
-*you* own. Production availability is capped at that machine's uptime — if
-it's off or your internet drops, the app's database is unreachable. Fine
-for a personal/small-classroom project; not what you'd want for anything
-with real uptime expectations.
-
-1. **Run the DB locally** (already set up): `docker compose up -d oracle`
-   from the repo root. This starts Oracle Free 23ai on port 1521 and
-   auto-creates the `paperdesk` app user via the `APP_USER`/
-   `APP_USER_PASSWORD` env vars in `docker-compose.yml` — no ADMIN-password
-   SQL Worksheet step needed, unlike Oracle Cloud ADB. Confirm it's healthy:
-   `docker compose ps` should show `healthy`.
-2. **Create a Cloudflare Tunnel** exposing that port *privately* (not a
-   public hostname anyone can hit) — Zero Trust dashboard → Networks →
-   Tunnels → Create a tunnel, then run the generated `cloudflared tunnel
-   run` command on the same machine as the Oracle container, pointed at
-   `tcp://localhost:1521`.
-3. **Protect it with a service token**, not an open route — Zero Trust →
-   Access → Service Auth → Create Service Token. This is what lets the
-   backend container authenticate non-interactively (no browser login
-   possible inside a container).
-4. **Bundle `cloudflared` into the backend's Docker image** (small addition
-   to the existing multi-stage `backend/Dockerfile`) and have the
-   container's entrypoint start `cloudflared access tcp --hostname
-   <your-tunnel-hostname> --url 127.0.0.1:1521 --service-token-id <id>
-   --service-token-secret <secret>` as a background process *before*
-   starting the JVM, so Spring's datasource URL just points at
-   `jdbc:oracle:thin:@localhost:1521/FREEPDB1` (the local proxy the
-   `cloudflared access` process sets up) — the JVM never talks to the
-   tunnel directly.
+1. Sign up / log in at https://supabase.com — no payment method needed for
+   the free tier.
+2. **New Project** → pick a name and region, set a strong database
+   password (this is the `postgres` superuser's password — keep it).
+3. Wait for provisioning (~2 minutes), then **Project Settings → Database**
+   for the connection info: host, port, database name (`postgres` by
+   default), username.
+4. **Use the direct connection (port 5432), not the pooled/"Transaction
+   mode" connection (port 6543)** for `SPRING_DATASOURCE_URL` — Flyway runs
+   its migrations through the same datasource the app uses, and Flyway's
+   schema-history locking doesn't play well with transaction-mode
+   connection pooling. The app's own HikariCP pool is capped small
+   (`DB_POOL_MAX:5` by default in `application-prod.yml`), well under the
+   free tier's direct-connection limit, so there's no need for the pooler.
+5. Optional, but good practice before this goes anywhere near real
+   students: in the Supabase **SQL Editor**, create a least-privilege app
+   role instead of running as the `postgres` superuser day-to-day:
+   ```sql
+   CREATE ROLE paperdesk LOGIN PASSWORD '<a strong password>';
+   GRANT ALL ON SCHEMA public TO paperdesk;
+   ```
 
 **Send back to me** (or add directly as GitHub Actions secrets — see §3):
-- `SPRING_DATASOURCE_URL` (`jdbc:oracle:thin:@localhost:1521/FREEPDB1` —
-  fixed, since the JVM always talks to the local `cloudflared access` proxy)
-- `SPRING_DATASOURCE_USERNAME` (`paperdesk`)
-- `SPRING_DATASOURCE_PASSWORD` (the `APP_USER_PASSWORD` from
-  `docker-compose.yml` — change it from the `paperdesk` placeholder before
-  this goes anywhere near production)
-- `CLOUDFLARE_TUNNEL_HOSTNAME` — the private hostname from step 2
-- `CLOUDFLARE_SERVICE_TOKEN_ID` / `CLOUDFLARE_SERVICE_TOKEN_SECRET` — from
-  step 3
+- `SPRING_DATASOURCE_URL` (`jdbc:postgresql://<host>:5432/postgres` — the
+  *direct* connection host from step 3)
+- `SPRING_DATASOURCE_USERNAME` (`paperdesk` if you did step 5, else `postgres`)
+- `SPRING_DATASOURCE_PASSWORD`
 
 ## 3. GitHub Actions secrets
 
@@ -107,9 +89,6 @@ use Environments:
 | `SPRING_DATASOURCE_URL` | §2 |
 | `SPRING_DATASOURCE_USERNAME` | §2 |
 | `SPRING_DATASOURCE_PASSWORD` | §2 |
-| `CLOUDFLARE_TUNNEL_HOSTNAME` | §2 |
-| `CLOUDFLARE_SERVICE_TOKEN_ID` | §2 |
-| `CLOUDFLARE_SERVICE_TOKEN_SECRET` | §2 |
 | `PAPERDESK_JWT_SECRET` | generate yourself: `openssl rand -base64 48` — a random value, not something I need to see |
 | `PAPERDESK_ALLOWED_ORIGIN` | the real public hostname once you've picked a domain, e.g. `https://paperdesk.example.com` |
 
@@ -124,17 +103,16 @@ Once §1–§3 are done, tell me and I'll:
    needs your logged-in `wrangler` session) to validate the Worker routing
    and Container binding actually work end-to-end — this is the Phase 0
    validation spike from the CD plan, and it has to happen against a real
-   account since Cloudflare Containers can't be emulated locally. This spike
-   now also needs to prove the §2 tunnel path works: the deployed container
-   can reach the self-hosted Oracle DB through `cloudflared access tcp`, and
-   that connection survives an idle HikariCP pool for several minutes (not
-   just a single fill-and-forget query).
+   account since Cloudflare Containers can't be emulated locally. This
+   includes confirming the deployed container can actually reach Supabase
+   (a straightforward outbound TLS connection, unlike the Oracle-Tunnel path
+   this replaced — much less to go wrong here).
 2. If that passes, wire up `.github/workflows/cd.yml` for automated deploys
    on every push to `main`.
-3. If the Worker→Container WebSocket proxy, the persistent-connection
-   behavior, or the tunnel-based DB path doesn't work as expected, we fall
-   back to the Hybrid architecture (backend on Fly.io/Render instead of
-   Cloudflare Containers, Cloudflare kept for the frontend + DNS) —
-   documented as the fallback in the CD plan. A self-hosted-DB-behind-tunnel
-   approach is compatible with that fallback too, just with the tunnel
-   terminating at Fly.io/Render instead of a Cloudflare Container.
+3. If the Worker→Container WebSocket proxy or persistent-connection
+   behavior doesn't work as expected, we fall back to the Hybrid
+   architecture (backend on Fly.io/Render instead of Cloudflare Containers,
+   Cloudflare kept for the frontend + DNS) — documented as the fallback in
+   the CD plan. Supabase is unaffected by that fallback either way, since
+   it's reached over the public internet regardless of where the backend
+   container runs.

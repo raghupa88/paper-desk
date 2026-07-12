@@ -1,16 +1,16 @@
-# Optional: real Oracle for parity runs. Dev/tests use H2 in Oracle mode and
-# need no containers at all.
+# Optional: real Postgres for parity runs. Dev/tests use H2 in PostgreSQL
+# mode and need no containers at all.
 services:
-  oracle:
-    image: gvenzl/oracle-free:23-slim
+  postgres:
+    image: postgres:17-alpine
     ports:
-      - "1521:1521"
+      - "5432:5432"
     environment:
-      ORACLE_PASSWORD: admin
-      APP_USER: paperdesk
-      APP_USER_PASSWORD: paperdesk
+      POSTGRES_DB: paperdesk
+      POSTGRES_USER: paperdesk
+      POSTGRES_PASSWORD: paperdesk
     healthcheck:
-      test: ["CMD", "healthcheck.sh"]
+      test: ["CMD-SHELL", "pg_isready -U paperdesk -d paperdesk"]
       interval: 10s
       timeout: 5s
       retries: 20

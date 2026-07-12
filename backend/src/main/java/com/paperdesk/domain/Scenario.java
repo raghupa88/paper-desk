@@ -11,7 +11,6 @@ public class Scenario {
     public String description;
     public long seed;
     public double acceleration;
-    @Lob
     @Column(name = "params_json")
     public String paramsJson;
 }

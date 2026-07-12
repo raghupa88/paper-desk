@@ -26,7 +26,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * End-to-end mechanics through the real Spring context (H2 Oracle mode,
+ * End-to-end mechanics through the real Spring context (H2 PostgreSQL mode,
  * Flyway schema, seeded scenarios) with the clock driven manually.
  */
 @SpringBootTest

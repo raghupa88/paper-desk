@@ -18,7 +18,7 @@ interest-rate swap.
 | Realtime | STOMP over WebSocket (`@stomp/stompjs` ⇄ Spring WebSocket) |
 | Charts | `lightweight-charts` |
 | Backend | Java 21, Spring Boot 3 (Web, Security + JWT, WebSocket, Data JPA), Maven |
-| Database | Oracle-compatible schema via Flyway; **H2 in Oracle mode** for dev/tests; real Oracle is config-only (see below) |
+| Database | PostgreSQL schema via Flyway; **H2 in PostgreSQL mode** for dev/tests; real Postgres is config-only (see below) |
 
 ## Quick start
 
@@ -234,19 +234,23 @@ for no isolation benefit this workload needs.
 (esp-js-polimer also ships its own `enableReduxDevTools` per model; this plugin is
 router-level and framework-agnostic by design, tracing *all* events across models.)
 
-## Using real Oracle instead of H2
+## Using real Postgres instead of H2
 
-The schema (Flyway, `backend/src/main/resources/db/migration`) is written
-Oracle-compatible and the Oracle JDBC driver ships with the build. Point the
-datasource at Oracle and start:
+The schema (Flyway, `backend/src/main/resources/db/migration`) is plain
+PostgreSQL and the driver ships with the build. Point the datasource at
+Postgres and start:
 
 ```bash
-docker compose up -d oracle   # gvenzl/oracle-free (23ai)
-SPRING_DATASOURCE_URL=jdbc:oracle:thin:@//localhost:1521/FREEPDB1 \
+docker compose up -d postgres   # postgres:17-alpine
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/paperdesk \
 SPRING_DATASOURCE_USERNAME=paperdesk \
 SPRING_DATASOURCE_PASSWORD=paperdesk \
 mvn spring-boot:run
 ```
+
+(Earlier versions of this app targeted Oracle specifically; it moved to
+Postgres so the free-tier production database doesn't require a credit card
+for identity verification — see `docs/cd-setup-runbook.md`.)
 
 ## Accessibility
 
@@ -365,12 +369,11 @@ end-to-end to the owning account's own subscription.
   enough that the container-binding syntax and the WebSocket-proxying
   behavior need hands-on confirmation).
 - `docs/cd-setup-runbook.md`: the one-time account-provisioning steps
-  (Cloudflare Workers/Containers + Oracle Autonomous Database, since the
-  Flyway migrations are Oracle-dialect) and the exact secrets list needed
-  before the pipeline can actually deploy anywhere.
+  (Cloudflare Workers/Containers + a free-tier managed Postgres) and the
+  exact secrets list needed before the pipeline can actually deploy anywhere.
 - `.github/workflows/cd.yml` doesn't exist yet — the last step, wiring the
   above into an automated deploy-on-push pipeline, is blocked on the
-  Cloudflare/Oracle accounts existing first.
+  Cloudflare/Postgres accounts existing first.
 
 ## Repository layout
 
@@ -382,5 +385,5 @@ frontend/  webpack + React + esp-js app — core services (src/core), polimer mo
            (src/models), views (src/views), reusable esp devtools (src/devtools)
 e2e/       Playwright end-to-end suite driving the real backend + frontend together
 worker/    Cloudflare Worker source for the CD routing layer (see Deployment, below)
-docs/      Setup runbooks (currently: Cloudflare/Oracle account provisioning for CD)
+docs/      Setup runbooks (currently: Cloudflare/Postgres account provisioning for CD)
 ```
