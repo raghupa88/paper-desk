@@ -112,6 +112,14 @@ cd e2e && npm ci && npx playwright test   # full-stack Playwright suite — see 
   leaderboard, not a replacement for it. "Active" vs "Ended" is derived at read time
   by comparing the cohort session's current sim date to the challenge's end date, so
   there's no background job needed to close one out. `POST/GET /api/cohorts/{id}/challenges`.
+- **Guided curricula** — an instructor sequences the existing mission catalog (see
+  Missions below) into an ordered, named path (e.g. "Options 101") for a cohort;
+  students see a locked syllabus rather than a loose scenario picker, unlocking one
+  step at a time as each mission is completed. Progress is always computed against
+  the *viewing user's own* accounts — an instructor viewing a curriculum sees their
+  own progress against it, same as a student; there's no separate per-student
+  breakdown here (that's what instructor grading, above, is for).
+  `POST/GET /api/cohorts/{id}/curricula`.
 
 ## Gamification — XP, levels & badges
 

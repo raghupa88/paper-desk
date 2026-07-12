@@ -7,6 +7,19 @@ import { StudentReviewPanel } from './StudentReviewPanel';
 import { useModelState, fmtMoney } from './common';
 import { Pnl } from './Pnl';
 
+/** Mirrors the backend's Mission enum (com.paperdesk.gamification.Mission) for the
+ * curriculum-builder picker -- titles/descriptions/xp for the full catalog live
+ * server-side; this is just the small, stable set of codes + labels to pick from. */
+const MISSION_CATALOG: Array<{ code: string; title: string }> = [
+  { code: 'FIRST_STEPS', title: 'First Steps' },
+  { code: 'COVERED_CALL', title: 'Covered Call Writer' },
+  { code: 'PROTECTIVE_PUT', title: 'Protective Put' },
+  { code: 'LONG_STRADDLE', title: 'Long Straddle' },
+  { code: 'FUTURES_LAB', title: 'Futures Settlement Lab' },
+  { code: 'FX_DESK', title: 'FX Desk Rotation' },
+  { code: 'SWAP_LAB', title: 'Swap Lab' },
+];
+
 /**
  * The lightweight classroom layer. Instructors create cohorts (each gets its
  * own dedicated seeded session) and share the join code; students join and the
@@ -27,6 +40,10 @@ export function ClassroomView() {
   const [challengeName, setChallengeName] = useState('');
   const [challengeDays, setChallengeDays] = useState(7);
   const [creatingChallenge, setCreatingChallenge] = useState(false);
+  const [curriculumName, setCurriculumName] = useState('');
+  const [curriculumDescription, setCurriculumDescription] = useState('');
+  const [selectedMissions, setSelectedMissions] = useState<string[]>([]);
+  const [creatingCurriculum, setCreatingCurriculum] = useState(false);
 
   useEffect(() => {
     void dataService.refreshCohorts();
@@ -39,6 +56,7 @@ export function ClassroomView() {
     const refresh = () => {
       void dataService.loadLeaderboard(state.selectedCohortId!);
       void dataService.loadChallenges(state.selectedCohortId!);
+      void dataService.loadCurricula(state.selectedCohortId!);
     };
     refresh();
     const t = window.setInterval(refresh, 5000);
@@ -53,6 +71,20 @@ export function ClassroomView() {
       .then(() => setChallengeName(''))
       .catch(e => setError(e.message))
       .finally(() => setCreatingChallenge(false));
+  };
+
+  const toggleMission = (code: string) => {
+    setSelectedMissions(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
+  };
+
+  const createCurriculum = () => {
+    if (!selected || !curriculumName || selectedMissions.length === 0) return;
+    setError(null);
+    setCreatingCurriculum(true);
+    dataService.createCurriculum(selected.cohortId, curriculumName, curriculumDescription, selectedMissions)
+      .then(() => { setCurriculumName(''); setCurriculumDescription(''); setSelectedMissions([]); })
+      .catch(e => setError(e.message))
+      .finally(() => setCreatingCurriculum(false));
   };
 
   const run = (fn: () => Promise<void>) => {
@@ -222,6 +254,72 @@ export function ClassroomView() {
               {state.challenges.length === 0 &&
                 <div className="p-4 text-desk-dim text-sm">
                   {isInstructor ? 'No challenges yet — start a timed sprint above.' : 'No challenges running yet.'}
+                </div>}
+            </div>
+          </div>
+        )}
+
+        {selected && (
+          <div className="panel">
+            <div className="panel-title">Curricula — a guided sequence of missions, one step unlocks the next</div>
+            {isInstructor && (
+              <div className="p-4 border-b border-desk-border space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  <label className="text-xs text-desk-dim flex flex-col gap-1 flex-1 min-w-[160px]">
+                    Curriculum name
+                    <input className="input" placeholder="e.g. Options 101" value={curriculumName}
+                           onChange={e => setCurriculumName(e.target.value)} />
+                  </label>
+                  <label className="text-xs text-desk-dim flex flex-col gap-1 flex-1 min-w-[160px]">
+                    Description (optional)
+                    <input className="input" placeholder="What this path teaches" value={curriculumDescription}
+                           onChange={e => setCurriculumDescription(e.target.value)} />
+                  </label>
+                </div>
+                <div>
+                  <div className="text-xs text-desk-dim mb-1">
+                    Steps, in the order students should complete them — click to add/remove:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {MISSION_CATALOG.map(m => {
+                      const idx = selectedMissions.indexOf(m.code);
+                      return (
+                        <button key={m.code} type="button"
+                                className={`btn text-xs normal-case ${idx >= 0 ? 'btn-accent' : ''}`}
+                                onClick={() => toggleMission(m.code)}>
+                          {idx >= 0 ? `${idx + 1}. ` : ''}{m.title}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <button className="btn btn-accent text-xs normal-case"
+                        disabled={!curriculumName || selectedMissions.length === 0 || creatingCurriculum}
+                        onClick={createCurriculum}>
+                  {creatingCurriculum ? 'Publishing…' : 'Publish curriculum'}
+                </button>
+              </div>
+            )}
+            <div className="divide-y divide-desk-border">
+              {state.curricula.map(c => (
+                <div key={c.curriculumId} className="p-4">
+                  <div className="font-semibold">{c.name}</div>
+                  {c.description && <div className="text-xs text-desk-dim mb-2">{c.description}</div>}
+                  <ol className="space-y-1 mt-2">
+                    {c.steps.map(s => (
+                      <li key={s.stepOrder}
+                          className={`text-sm flex items-center gap-2 ${!s.unlocked ? 'opacity-50' : ''}`}>
+                        <span aria-hidden="true">{s.complete ? '✅' : s.unlocked ? '🎯' : '🔒'}</span>
+                        <span className={s.complete ? 'text-desk-up' : ''}>{s.title}</span>
+                        <span className="text-xs text-desk-dim">+{s.xp} XP</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+              {state.curricula.length === 0 &&
+                <div className="p-4 text-desk-dim text-sm">
+                  {isInstructor ? 'No curricula yet — publish a guided path above.' : 'No curriculum assigned yet.'}
                 </div>}
             </div>
           </div>
