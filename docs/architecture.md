@@ -70,6 +70,13 @@ most important thing to understand about how this app is wired together.
   type) and `PortfolioService` (live valuation, the trader scorecard).
 - `com.paperdesk.gamification` — XP/levels/badges, missions, daily streaks;
   all server-evaluated so nothing can be spoofed client-side.
+- `com.paperdesk.coach` — the AI trading coach ("explain this trade"):
+  `AnthropicClient` is a thin seam over the real Anthropic Messages API call
+  (`AnthropicHttpClient`, plain `java.net.http.HttpClient`, no SDK dependency
+  needed), `TradingCoachService` builds the grounded prompt from an order's
+  own fills/instrument/Greeks/account data and degrades to
+  `configured:false` rather than failing startup when `ANTHROPIC_API_KEY`
+  isn't set — this is the one service in the app that's optional by design.
 - `com.paperdesk.config` — `JwtService`, `SecurityConfig`,
   `StompAuthChannelInterceptor` (topic-level WebSocket authorization),
   `AccountGuard` (per-request "do you own this account" check used at the
@@ -162,6 +169,7 @@ the main exception cases worth knowing about.
 | **DevTools** | Always active (`process.env.NODE_ENV === 'development'`) — no opt-in needed | Off by default; code isn't even downloaded until explicitly activated via `?devtools=1`, a persisted prior opt-in, or Ctrl+Shift+E (see `frontend/src/devtools/activation.ts`) — safe to leave shipped in the prod bundle since it's inert until turned on |
 | **Migrations** | Flyway runs automatically on every boot, against a schema that resets each time (in-memory H2) | Flyway also runs automatically on every boot, but against a schema that *persists* — the **first** prod deploy should be a manually-triggered `workflow_dispatch` (not an ordinary `main` push) so a human watches the first migration land cleanly on a fresh schema; every deploy after that is safe via Flyway's checksum tracking |
 | **Sim clock** | `paperdesk.sim.auto-tick: true` by default, same as prod (only the `test` profile sets it `false`, so tests can step time explicitly) | Same as dev — no difference here, called out just to head off the assumption that there is one |
+| **AI trading coach** | `ANTHROPIC_API_KEY` unset by default — the coach reports `configured:false` and the Blotter shows a "not configured" message; nothing else in the app is affected | Same optional behavior — unlike the JWT secret, an unset key does **not** fail startup, only turn the one feature off. Set `ANTHROPIC_API_KEY` (and optionally `PAPERDESK_COACH_MODEL`) whenever you're ready to enable it |
 
 ## Where the deployment story stands
 

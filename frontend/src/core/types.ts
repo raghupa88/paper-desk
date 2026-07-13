@@ -305,6 +305,13 @@ export interface TradeComment {
   createdAt: string;
 }
 
+export interface CoachExplanation {
+  configured: boolean;
+  explanation: string | null;
+  model: string;
+  error: string | null;
+}
+
 export interface BadgeView {
   code: string;
   title: string;

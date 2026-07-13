@@ -1,7 +1,7 @@
 import { Router, observeEvent } from 'esp-js';
 import { ImmutableModel } from 'esp-js-polimer';
 import { EventConst, ModelIds } from '../core/events';
-import { EquityPoint, OrderView, PortfolioView, Quote, ScorecardView, SettlementView, TradeComment } from '../core/types';
+import { CoachExplanation, EquityPoint, OrderView, PortfolioView, Quote, ScorecardView, SettlementView, TradeComment } from '../core/types';
 
 export interface TicketState {
   instrument: Quote | null;
@@ -30,6 +30,9 @@ export interface TradingState {
   notifications: Notification[];
   /** Instructor comments on my own orders, keyed by orderId, fetched on demand. */
   orderComments: Record<number, TradeComment[]>;
+  /** AI coach "explain this trade" result per orderId, fetched on demand. */
+  coachExplanations: Record<number, CoachExplanation>;
+  coachLoadingOrderId: number | null;
 }
 
 export interface TradingModel extends ImmutableModel {
@@ -109,6 +112,17 @@ class TradingStateHandlers {
     draft.orderComments[ev.orderId] = ev.comments;
   }
 
+  @observeEvent(EventConst.coachExplanationLoading)
+  onCoachExplanationLoading(draft: TradingState, ev: { orderId: number }) {
+    draft.coachLoadingOrderId = ev.orderId;
+  }
+
+  @observeEvent(EventConst.coachExplanationLoaded)
+  onCoachExplanationLoaded(draft: TradingState, ev: { orderId: number; explanation: CoachExplanation }) {
+    draft.coachExplanations[ev.orderId] = ev.explanation;
+    if (draft.coachLoadingOrderId === ev.orderId) draft.coachLoadingOrderId = null;
+  }
+
   @observeEvent(EventConst.accountEventReceived)
   onAccountEvent(draft: TradingState, ev: { type: string; detail: unknown }) {
     draft.notifications.unshift({ at: Date.now(), type: ev.type, detail: String(ev.detail) });
@@ -125,6 +139,8 @@ class TradingStateHandlers {
     draft.scorecard = null;
     draft.notifications = [];
     draft.orderComments = {};
+    draft.coachExplanations = {};
+    draft.coachLoadingOrderId = null;
   }
 }
 
@@ -135,6 +151,7 @@ export function registerTradingModel(router: Router) {
       state: {
         ticket: emptyTicket(), portfolio: null, equityHistory: [],
         blotter: [], settlements: [], scorecard: null, notifications: [], orderComments: {},
+        coachExplanations: {}, coachLoadingOrderId: null,
       },
     })
     .withStateHandlers('state', new TradingStateHandlers())

@@ -70,6 +70,10 @@ export const EventConst = {
 
   // trading: per-order instructor comments on my own blotter
   blotterCommentsLoaded: 'blotterCommentsLoaded',
+
+  // trading: AI coach explanation for a single order, fetched on demand
+  coachExplanationLoading: 'coachExplanationLoading',
+  coachExplanationLoaded: 'coachExplanationLoaded',
 } as const;
 
 export const ModelIds = {

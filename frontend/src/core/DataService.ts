@@ -4,7 +4,7 @@ import { AuthStore } from './AuthStore';
 import { StompService } from './StompService';
 import { EventConst, ModelIds } from './events';
 import {
-  AccountInfo, ChainData, Challenge, ClockState, Cohort, CohortGrade, Curriculum, GradeInput,
+  AccountInfo, ChainData, Challenge, ClockState, CoachExplanation, Cohort, CohortGrade, Curriculum, GradeInput,
   LeaderboardRow, MissionView, OrderView, PairLadder, PortfolioView, ProgressView, Quote, RfqQuote,
   Scenario, ScorecardView, SettlementView, StreakInfo, StudentDetail, TradeComment, UserInfo, Bar,
   EquityPoint,
@@ -215,6 +215,17 @@ export class DataService {
   async loadOrderComments(orderId: number): Promise<void> {
     const comments = await this.api.get<TradeComment[]>(`/api/orders/${orderId}/comments`);
     this.router.publishEvent(ModelIds.trading, EventConst.blotterCommentsLoaded, { orderId, comments });
+  }
+
+  async explainTrade(orderId: number): Promise<void> {
+    this.router.publishEvent(ModelIds.trading, EventConst.coachExplanationLoading, { orderId });
+    try {
+      const explanation = await this.api.post<CoachExplanation>(`/api/orders/${orderId}/explain`);
+      this.router.publishEvent(ModelIds.trading, EventConst.coachExplanationLoaded, { orderId, explanation });
+    } catch (e: any) {
+      const explanation: CoachExplanation = { configured: true, explanation: null, model: '', error: e.message };
+      this.router.publishEvent(ModelIds.trading, EventConst.coachExplanationLoaded, { orderId, explanation });
+    }
   }
 
   // ---- gamification ----
