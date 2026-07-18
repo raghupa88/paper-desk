@@ -15,7 +15,7 @@
     "esp-js-di": "8.1.0",
     "esp-js-polimer": "8.1.0",
     "esp-js-react": "8.1.0",
-    "immer": "^10.2.0",
+    "immer": "^11.1.15",
     "lightweight-charts": "^4.2.3",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
